@@ -13,25 +13,24 @@ export type Link = {
 }
 
 export const SITE: Site = {
-  TITLE: 'astro-erudite',
+  TITLE: 'flocto',
   DESCRIPTION:
-    'astro-erudite is a opinionated, no-frills blogging template—built with Astro, Tailwind, and shadcn/ui.',
-  EMAIL: 'jason@enscribe.dev',
+    'hi this is my personal website / blog. i write about computers and other stuff.',
+  EMAIL: 'flocto@duck.com',
   NUM_POSTS_ON_HOMEPAGE: 2,
   POSTS_PER_PAGE: 3,
-  SITEURL: 'https://astro-erudite.vercel.app',
+  SITEURL: 'https://flocto.github.io/',
 }
 
 export const NAV_LINKS: Link[] = [
   { href: '/blog', label: 'blog' },
-  { href: '/authors', label: 'authors' },
   { href: '/about', label: 'about' },
   { href: '/tags', label: 'tags' },
 ]
 
 export const SOCIAL_LINKS: Link[] = [
-  { href: 'https://github.com/jktrn', label: 'GitHub' },
-  { href: 'https://twitter.com/enscry', label: 'Twitter' },
-  { href: 'jason@enscribe.dev', label: 'Email' },
+  { href: 'https://github.com/flocto', label: 'GitHub' },
+  { href: 'https://twitter.com/fl0ct0', label: 'Twitter' },
+  { href: 'flocto@duck.com', label: 'Email' },
   { href: '/rss.xml', label: 'RSS' },
 ]

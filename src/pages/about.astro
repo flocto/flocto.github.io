@@ -1,30 +1,29 @@
 ---
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
 import Container from '@/components/Container.astro'
-import ProjectCard from '@/components/ProjectCard.astro'
+import Link from '@/components/Link.astro'
 import { SITE } from '@/consts'
+import { Image } from 'astro:assets'
 import Layout from '@/layouts/Layout.astro'
-import { getCollection } from 'astro:content'
-
-const projects = await getCollection('projects')
+import logo from '../../public/static/logo.png'
 ---
 
-<Layout title="About" description={SITE.DESCRIPTION}>
+<Layout title="| About" description={SITE.DESCRIPTION}>
   <Container class="flex flex-col gap-y-6">
     <Breadcrumbs items={[{ label: 'About', icon: 'lucide:info' }]} />
 
     <section>
       <div class="min-w-full">
-        <h1 class="mb-4 text-3xl font-bold">Some more about us</h1>
+        <h1 class="mb-4 text-3xl font-bold"><Image src={logo} alt="Logo" class="size-12 float-left mr-4 rounded-sm" />About Me</h1>
         <p class="prose prose-neutral mb-8 dark:prose-invert">
-          {SITE.TITLE} is an opinionated, no-frills static blogging template built
-          with Astro.
+          Hi! I'm <b>flocto</b>, a person who enjoys computers. I'm currently studying computer science at Texas A&M. I like to program things and play CTFs. You can find my <Link href="https://github.com/flocto" external>GitHub</Link> and <Link href="https://twitter.com/flocto_" external>Twitter</Link> here.
         </p>
-
-        <h2 class="mb-4 text-2xl font-semibold">Our Projects</h2>
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => <ProjectCard project={project} />)}
-        </div>
+        <p class="prose prose-neutral mb-8 dark:prose-invert">
+          In terms of CTFs, I mostly do reverse engineering, but I'm also interested in cryptography and pwn. I play mostly with <Link href="https://ctftime.org/team/222911" external>.;,;.</Link> and <Link href="https://ctftime.org/team/220769" external>Friendly Maltese Citizens</Link>, but you'll see me hover around other teams as well.
+        </p>
+        <p class="prose prose-neutral mb-8 dark:prose-invert">
+          Outside of that, I like to eat food and play games. I'm especially fond of puzzle games, but I also like playing random games with friends. I also like to read manga/manhwa/manhua and light novels, so if you have any recommendations, feel free to send them my way!
+        </p>
       </div>
     </section>
   </Container>

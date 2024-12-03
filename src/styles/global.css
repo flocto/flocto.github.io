@@ -38,8 +38,8 @@
     --ring: 0 0% 3.9%;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: #4a4b4e;
+    --foreground: #292a2d;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
     --secondary: 0 0% 14.9%;
@@ -107,7 +107,12 @@
 
     /* Inline code */
     :not(pre) > code {
-      @apply relative rounded bg-muted/50 px-[0.3rem] py-[0.2rem] font-mono text-sm font-medium;
+      @apply relative rounded bg-muted/50 px-[0.3rem] py-[0.2rem] font-mono text-sm font-medium before:!content-none after:!content-none;
+    }
+
+    /* Blockquotes */
+    blockquote * {
+      @apply before:!content-none after:!content-none;
     }
 
     /* Code blocks */
