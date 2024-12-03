@@ -12,6 +12,7 @@ const config: Config = {
       },
       colors: {
         background: 'hsl(var(--background))',
+        header_background: 'hsl(var(--header-background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
