@@ -2,7 +2,7 @@
 title: "Breaking Java Random - BucketCTF 2023 Writeup"
 description: Cracking Java's util.Random RNG with only 1 sample.
 date: "Apr 12 2023"
-tags: []
+tags: ['writeup', 'bucketctf', 'crypto', '2023']
 authors: ['flocto']
 image: './hero.png'
 ---

@@ -2,7 +2,7 @@
 title: 'First Blogpost'
 description: 'Obligatory first blogpost'
 date: 'Feb 17 2023'
-tags: []
+tags: ['blog', '2023']
 authors: ['flocto']
 image: './hero.png'
 ---

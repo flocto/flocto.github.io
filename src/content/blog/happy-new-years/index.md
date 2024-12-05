@@ -2,7 +2,7 @@
 title: 'Happy new years!'
 description: 'More updates and ramblings'
 date: 'Jan 08 2024'
-tags: []
+tags: ['blog', '2024']
 authors: ['flocto']
 image: './hero.png'
 ---

@@ -2,7 +2,7 @@
 title: "UIL State CS Packet #7"
 description: "Solving system of linear equations with matrices"
 date: 'Feb 20 2023'
-tags: []
+tags: ['blog', '2023', 'programming']
 authors: ['flocto']
 image: './hero.png'
 ---

@@ -2,7 +2,7 @@
 title: "BucketCTF 2023 Megathread"
 description: Megathread for BucketCTF 2023, with writeups for the challenges I solved.
 date: "Apr 12 2023"
-tags: []
+tags: ['writeup', 'bucketctf', 'misc', 'crypto', 'rev', '2023']
 authors: ['flocto']
 image: './hero.png'
 ---

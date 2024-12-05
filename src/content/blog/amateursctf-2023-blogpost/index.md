@@ -2,7 +2,7 @@
 title: "amateursCTF 2023 Blogpost"
 description: 'Some words about my experience helping with amateursCTF 2023'
 date: 'Jul 17 2023'
-tags: []
+tags: ['blog', 'amateursctf', '2023']
 authors: ['flocto']
 image: './hero.png'
 ---
@@ -57,7 +57,7 @@ Unfortunately for me, I think all the solvers of the challenge just used the ori
 
 Anyway, if I could go back, I would probably split this challenge into two parts, one requiring the original CHSH solution and one requiring the bug. I would also make the bug more obvious, since it was quite subtle and I don't think anyone actually found it.
 
-Update: Someone actually managed to solve with a full 100% win rate, which was amazing! They used the `z` gate to preserve information between runs and rotated the qubits if and only if the `z` phase was already applied. This was a really cool solution, and I've peeved I didn't find it earlier since I could've actually prevented any cheese from occurring.
+Update: Someone actually managed to solve with a full 100% win rate, which was amazing! They used the `z` gate to preserve information between runs and rotated the qubits if and only if the `z` phase was already applied. This was a really cool solution, and I'm sad I didn't find it earlier since I could've actually prevented any cheese from occurring.
 
 Ending notes on Misc, overall my two challenges, while a bit unbalanced, still served their purpose. Hopefully, the Qiskit introduction wasn't too rough for most people, and they at least enjoyed solving the warmup.
 
