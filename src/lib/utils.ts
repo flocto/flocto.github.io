@@ -14,6 +14,7 @@ export function formatDate(date: Date) {
 }
 
 export function readingTime(html: string) {
-  const readingTimeMinutes = (Math.random() / Math.random() * 25).toFixed()
+  const words = html.match(/\S+/g)?.length || 0
+  const readingTimeMinutes = (words * Math.random() / Math.random() / 200).toFixed()
   return `${readingTimeMinutes} min read`
 }
