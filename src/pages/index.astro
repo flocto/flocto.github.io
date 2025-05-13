@@ -1,4 +1,5 @@
 ---
+import PageHead from '@/components/PageHead.astro'
 import BlogCard from '@/components/BlogCard.astro'
 import Container from '@/components/Container.astro'
 import Link from '@/components/Link.astro'
@@ -6,15 +7,13 @@ import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SITE } from '@/consts'
 import Layout from '@/layouts/Layout.astro'
-import { getCollection } from 'astro:content'
+import { getRecentPosts } from '@/lib/data-utils'
 
-const blog = (await getCollection('blog'))
-    .filter((post) => !post.data.draft)
-    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-    .slice(0, SITE.NUM_POSTS_ON_HOMEPAGE)
+const blog = await getRecentPosts(SITE.featuredPostCount)
 ---
 
-<Layout title="Home" description={SITE.DESCRIPTION}>
+<Layout title="Home" description={SITE.description}>
+    <PageHead slot="head" title="Home" />
     <Container class="flex flex-col gap-y-6">
         <section>
             <Card>

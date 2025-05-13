@@ -17,13 +17,12 @@ export interface BreadcrumbItem {
 
 interface Props {
   items: BreadcrumbItem[]
-  class?: string
 }
 
-const { items, class: className } = Astro.props
+const { items } = Astro.props
 ---
 
-<Breadcrumb className={className}>
+<Breadcrumb>
   <BreadcrumbList>
     <BreadcrumbItem>
       <BreadcrumbLink href="/">

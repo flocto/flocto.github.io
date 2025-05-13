@@ -1,75 +1,47 @@
 ---
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
 import Link from '@/components/Link.astro'
+import PostHead from '@/components/PostHead.astro'
 import PostNavigation from '@/components/PostNavigation.astro'
 import TableOfContents from '@/components/TableOfContents.astro'
 import { badgeVariants } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import Layout from '@/layouts/Layout.astro'
-import { parseAuthors } from '@/lib/server-utils'
+import { getAdjacentPosts, getAllPosts, parseAuthors } from '@/lib/data-utils'
 import { formatDate, readingTime } from '@/lib/utils'
 import { Icon } from 'astro-icon/components'
 import { Image } from 'astro:assets'
-import { type CollectionEntry, getCollection, render } from 'astro:content'
+import { render } from 'astro:content'
 
 export async function getStaticPaths() {
-  const posts = (await getCollection('blog'))
-    .filter((post) => !post.data.draft)
-    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  const posts = await getAllPosts()
   return posts.map((post) => ({
     params: { id: post.id },
     props: post,
   }))
 }
-type Props = CollectionEntry<'blog'>
-
-const posts = (await getCollection('blog'))
-  .filter((post) => !post.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-
-
-function getPostIndex(id: string): number {
-  return posts.findIndex((post) => post.id === id)
-}
-
-function getPrevPost(id: string): Props | null {
-  const postIndex = getPostIndex(id)
-  return postIndex !== -1 && postIndex < posts.length - 1
-    ? posts[postIndex + 1]
-    : null
-}
-
-function getNextPost(id: string): Props | null {
-  const postIndex = getPostIndex(id)
-  return postIndex > 0 ? posts[postIndex - 1] : null
-}
-
-const currentPostId = Astro.params.id
-const nextPost = getNextPost(currentPostId)
-const prevPost = getPrevPost(currentPostId)
 
 const post = Astro.props
+const currentPostId = Astro.params.id
 const { Content, headings } = await render(post)
-
+const { next, prev } = await getAdjacentPosts(currentPostId)
 const authors = await parseAuthors(post.data.authors ?? [])
 ---
 
-<Layout
-  title={post.data.title}
-  description={post.data.description}
-  image={post.data.image?.src ?? '/static/1200x630.png'}
->
+<Layout isWide>
+  <PostHead slot="head" post={post} />
   <section
-    class="grid grid-cols-[minmax(0px,1fr)_min(768px,100%)_minmax(0px,1fr)] gap-y-6 *:px-4"
+    class="grid grid-cols-[minmax(0px,1fr)_min(calc(var(--breakpoint-md)-2rem),100%)_minmax(0px,1fr)] gap-y-6"
   >
-    <Breadcrumbs
-      items={[
-        { href: '/blog', label: 'Blog', icon: 'lucide:archive' },
-        { label: post.data.title, icon: 'lucide:file-text' },
-      ]}
-      class="col-start-2"
-    />
+    <div class="col-start-2">
+      <Breadcrumbs
+        items={[
+          { href: '/blog', label: 'Blog', icon: 'lucide:archive' },
+          { label: post.data.title, icon: 'lucide:file-text' },
+        ]}
+      />
+    </div>
     {
       post.data.image && (
         <Image
@@ -77,18 +49,20 @@ const authors = await parseAuthors(post.data.authors ?? [])
           alt={post.data.title}
           width={1200}
           height={630}
-          class="col-span-full mx-auto w-full max-w-[1000px] object-cover"
+          class="col-span-full mx-auto w-full max-w-5xl object-cover"
         />
       )
     }
     <section class="col-start-2 flex flex-col gap-y-6 text-center">
-      <div class="flex flex-col gap-y-4">
-        <h1 class="text-4xl font-bold leading-tight sm:text-5xl">
+      <div class="flex flex-col">
+        <h1
+          class="mb-2 text-4xl leading-tight font-medium text-pretty sm:text-5xl"
+        >
           {post.data.title}
         </h1>
 
         <div
-          class="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground"
+          class="text-muted-foreground mb-4 flex flex-wrap items-center justify-center gap-2 text-sm"
         >
           {
             authors.length > 0 && (
@@ -117,13 +91,13 @@ const authors = await parseAuthors(post.data.authors ?? [])
                     </div>
                   ))}
                 </div>
-                <Separator orientation="vertical" className="h-4" />
+                <Separator orientation="vertical" className="h-4!" />
               </>
             )
           }
           <div class="flex items-center gap-2">
             <span>{formatDate(post.data.date)}</span>
-            <Separator orientation="vertical" className="h-4" />
+            <Separator orientation="vertical" className="h-4!" />
             <span>{readingTime(post.body!)}</span>
           </div>
         </div>
@@ -135,12 +109,12 @@ const authors = await parseAuthors(post.data.authors ?? [])
                   href={`/tags/${tag}`}
                   class={badgeVariants({ variant: 'secondary' })}
                 >
-                  <Icon name="lucide:hash" class="size-3 -translate-x-0.5" />
+                  <Icon name="lucide:hash" class="size-3" />
                   {tag}
                 </a>
               ))
             ) : (
-              <span class="text-sm text-muted-foreground">
+              <span class="text-muted-foreground text-sm">
                 No tags available
               </span>
             )
@@ -148,24 +122,22 @@ const authors = await parseAuthors(post.data.authors ?? [])
         </div>
       </div>
 
-      <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+      <PostNavigation prevPost={prev} nextPost={next} />
     </section>
 
     {headings.length > 0 && <TableOfContents headings={headings} />}
 
-    <article
-      class="prose prose-neutral col-start-2 max-w-none dark:prose-invert"
-    >
+    <article class="prose col-start-2 max-w-none">
       <Content />
     </article>
 
-    <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+    <PostNavigation prevPost={prev} nextPost={next} />
   </section>
 
   <Button
     variant="outline"
     size="icon"
-    className="group fixed bottom-8 right-8 z-50 hidden"
+    className="group fixed right-8 bottom-8 z-50 hidden"
     id="scroll-to-top"
     title="Scroll to top"
     aria-label="Scroll to top"

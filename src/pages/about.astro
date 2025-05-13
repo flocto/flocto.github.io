@@ -2,13 +2,15 @@
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
 import Container from '@/components/Container.astro'
 import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
 import { SITE } from '@/consts'
 import { Image } from 'astro:assets'
 import Layout from '@/layouts/Layout.astro'
 import logo from '../../public/static/logo.png'
 ---
 
-<Layout title="| About" description={SITE.DESCRIPTION}>
+<Layout title="| About" description={SITE.description}>
+  <PageHead slot="head" title="About" />
   <Container class="flex flex-col gap-y-6">
     <Breadcrumbs items={[{ label: 'About', icon: 'lucide:info' }]} />
 
