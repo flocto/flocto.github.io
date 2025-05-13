@@ -1,0 +1,972 @@
+---
+title: "LakeCTF Finals 2025 Writeups"
+description: "Fun rev challenges from LakeCTF 2025 Finals"
+date: 5-12-2025
+tags: ['writeup', '2025', 'rev']
+authors: ['flocto']
+image: './hero.png'
+---
+import Callout from '@/components/Callout.astro'
+
+
+Recently we ([.;,;.](https://ctf.gg/)) got to travel to Switzerland and participate in the 2025 LakeCTF Finals at EPFL Lausanne. It was a great experience and we all had a ton of fun traveling and competing. 
+
+Unfortunately, we didn't manage to win, only getting 4th place. Still, I really enjoyed the challenges, so here's writeups for the challenges I solved, which were mostly rev with one misc.
+
+# misc - Craft The Flag
+> Oh wait CTF doesn't mean Craft The Flag
+>
+> `nc chall.polygl0ts.ch 9098`
+>
+> Points: 110 | Solves: 10
+
+```sh title="challenge_fakeflag.sh"
+#!/bin/bash
+
+# Set colors for a more dynamic experience
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+# ASCII Minecraft-style art (for the intro)
+echo -e "${CYAN}---------------------------------------------------"
+echo -e "  ${GREEN}Welcome to my new 1.8.8 Minecraft Server!${RESET}"
+echo -e "  ${YELLOW}Log in and come play with us!${RESET}"
+echo -e "---------------------------------------------------"
+echo -e ""
+echo -e "${YELLOW}Type your username to get started!${RESET}"
+echo -e ""
+
+# Sleep for dramatic effect :dramatic:
+sleep 1
+
+while true; do
+    echo -e "${CYAN}----------------------------${RESET}"
+    echo -e "${GREEN}${##} - Log in${RESET}"
+    echo -e "${RED}$((${##}<<${##})) - Exit${RESET}"
+    echo -e "${CYAN}----------------------------${RESET}"
+    echo -e "Choose an option: "
+    read choice
+
+    if [ "$choice" -eq 1 ]; then
+
+        echo -e "${YELLOW}Enter your Minecraft username:${RESET}"
+        read username
+        echo -e ""
+
+
+        if [ ! -f whitelist.json ]; then
+            echo -e "${RED}Error: whitelist.json not found! Please contact the admin.${RESET}"
+            continue
+        fi
+
+        if jq -e --arg name "$username" '.[] | select(. == $name)' whitelist.json > /dev/null; then
+            echo -e "${GREEN}Access granted! Welcome, ${CYAN}$username${GREEN}!${RESET}"
+            echo -e ""
+            echo -e "${CYAN}Enjoy your stay on our Minecraft server!${RESET}"
+            echo -e "flag : EPFL{FAKE}"
+        else
+            echo -e "${RED}Access denied! You are not on the whitelist.${RESET}"
+            echo -e ""
+            echo -e "${CYAN}Try again later!${RESET}"
+        fi
+
+    elif [ "$choice" -eq 2 ]; then
+        echo "$ "
+        read -r input
+        
+    
+        if [[ "$input" =~ [[:alnum:]] || ${#input} -gt 110 ]]; then
+            echo "Error: Rejected." >&2
+            continue
+        else
+            eval "bash -c \"$input\""
+        fi
+    else
+        echo "Invalid input. Please enter 1 or 2."
+    fi
+
+    echo
+done
+```
+
+```Dockerfile title="Dockerfile"
+# Stage 1: Build the minimal environment
+FROM ubuntu:20.04 AS base
+
+# Install only what’s necessary
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    bash \
+    jq \
+    coreutils && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create restricted bin
+RUN mkdir -p /restricted-bin && \
+    cp /bin/ls /restricted-bin/ && \
+    cp /bin/cat /restricted-bin/
+                
+# Create user and home
+RUN useradd -ms /bin/rbash ctfuser
+WORKDIR /home/ctfuser
+
+# Copy the challenge files
+COPY challenge.sh /home/ctfuser/challenge_script.sh
+COPY whitelist.json /app/whitelist.json
+
+# Permissions and restricted profile
+RUN echo 'export PATH=/restricted-bin' >> /home/ctfuser/.bash_profile && \
+    chmod +x /home/ctfuser/challenge_script.sh
+
+# Stage 2: Final jail
+FROM pwn.red/jail
+
+# Copy the entire restricted environment
+COPY --from=base / /srv
+
+# redpwn/jail expects a /srv/app/run entrypoint
+COPY --from=base /home/ctfuser/challenge_script.sh /srv/app/run
+
+# Make sure /srv/app/run is executable
+RUN chmod +x /srv/app/run
+
+ENV JAIL_TIME 120
+ENV JAIL_CONNS_PER_IP 5
+ENV JAIL_MEM 20M
+ENV JAIL_TMP_SIZE 20M
+```
+
+With a quick parse-through of the challenge, we can see a pretty clear hole in the script. 
+```sh
+    elif [ "$choice" -eq 2 ]; then
+        echo "$ "
+        read -r input
+        
+    
+        if [[ "$input" =~ [[:alnum:]] || ${#input} -gt 110 ]]; then
+            echo "Error: Rejected." >&2
+            continue
+        else
+            eval "bash -c \"$input\""
+        fi
+```
+
+As long as we can produce some input that does not contain alphanumeric characters, we can run arbitrary bash commands.
+
+One special feature of bash that fits perfectly here is using wildcards to glob files. This allows us to execute files even if we can't spell them out by name. 
+
+Checking the Dockerfile, we see that there are helpful `cat` and `ls` binaries in `/restricted-bin`. This lets us run `cat` by using `/*-*/???` instead, since after expansion, the only valid path will end up being `/restricted-bin/cat`.
+
+From here, we can simply allow it to print every file in the directory, which should print the original sh script and give us the flag.
+
+```shell
+$ nc chall.polygl0ts.ch 9098
+---------------------------------------------------
+  Welcome to my new 1.8.8 Minecraft Server!
+  Log in and come play with us!
+---------------------------------------------------
+
+Type your username to get started!
+
+----------------------------
+1 - Log in
+2 - Exit
+----------------------------
+Choose an option:
+2
+$ 
+/*-*/??? *
+... [truncated]
+            echo -e "${GREEN}Access granted! Welcome, ${CYAN}$username${GREEN}!${RESET}"
+            echo -e ""
+            echo -e "${CYAN}Enjoy your stay on our Minecraft server!${RESET}"
+            echo -e "flag : EPFL{LooKs_l1k3_4lph4numeric_filter_1s_n0t_enough}"
+... [truncated]
+```
+
+Flag: `EPFL{LooKs_l1k3_4lph4numeric_filter_1s_n0t_enough}`
+
+# rev - Fastprocess
+> Classic example of a bad rev challenge. File 'solutions.txt' is only an example. On the remote, it is regenerated every run.
+>
+> `nc chall.polygl0ts.ch 9070`
+>
+> Points: 116 | Solves: 9
+
+[main](../../static/2025/lakectf-finals-writeups/fastprocess/main) | [solutions.txt](../../static/2025/lakectf-finals-writeups/fastprocess/solutions.txt)
+```text title="solutions.txt"
+419039093524866021 5253480278082363392
+129512260564226652 13124866128201383936
+749069362794463437 1232252044832186368
+335140905473764197 14871695962828439552
+335574193081417235 10650717383824457728
+256966611085784470 7817403002779959296
+788172764199840145 5481958494201839616
+964226096677086814 5756354812978974720
+75846918916011634 3688607283484295168
+846608871809048473 4253718553447359808
+218703394089169872 8196101361308802880
+499013370692702107 1846328187118682112
+945012864030497780 7768503082148691968
+19502795608119922 17475123775309332480
+109309650614386697 5731122308704003712
+455169381196390377 8505588835330692002
+382060665718823014 10367968462000619520
+991515285034548022 5762003957672520380
+694955152716075095 9606573056292028416
+784309398688803593 9316358259134693376
+139655098495424036 1783217031878017024
+460276414731333146 9975190514690949120
+69316359781098132 2199409486861434880
+804346961375328652 8051030820439195648
+402975832422002478 6777181155091152896
+742590227786291609 1974932880912147277
+1208462624441848 16013984677819842560
+51168125059044772 8116719871330353151
+929563989532142684 212405186500921600
+276624970662116728 13317267436710395904
+266852951274819606 7308905345671168000
+485870317150999840 11966129992063801344
+609992127017103343 5519573816147029760
+366828048311940032 2386754815771279360
+735390599405822397 18301429462144450560
+95456812816183194 7196581779833094144
+496099120990257678 1456528131174297936
+640864335947465031 9339274452638648448
+946781867878999462 12570039778120302592
+333748393004210653 13753056054296900864
+841709238117981116 6184007288911560704
+789079934945951395 10512370723316072448
+886656151836613348 16483705204223508480
+594464156819792349 15008800528433938432
+869721049525515399 7826697540430957360
+420908831683767374 13527922726904529168
+305387935205720779 17864174920631320576
+737481728539219474 8273258489095127040
+904350040485185493 16096235376292970496
+762734017514446383 2948572329451454464
+725857737885243305 13931915872785399808
+870452166195405054 14310294361223462912
+926823472953286272 4118453577117073408
+479271339778015133 7242270112502438400
+581754946937570551 13965509329168138240
+432591374554499103 5894715894748296192
+710856070764706301 13619125978106691584
+301403928406009131 6030266247160004608
+204406966792247251 14305335043993407488
+148567668923502407 14801270184706310144
+492369546879655204 2161754450586410168
+414535906265309725 17347344655712256000
+751055965195743066 11472746865968021504
+83688570794639996 5328798925300170752
+214720901554107603 11661058181345306624
+715917706375823303 10635904883700498432
+646555488927200753 5797261115931263133
+872802759508878029 15551643886630731776
+171646073839858716 8546590612034420736
+695076175609310027 17939441421819346816
+877972691643807577 32973253714761536
+550881926790469596 14615008417420031024
+780883385074613093 5208897595304312832
+716570344611606290 5176580041879257088
+532890293218718689 5135002756768584384
+71071369011023634 7358546950200231800
+441019070814670325 6891596181668901269
+362106324076817263 6669060028491628545
+174420813453635649 15438673172462829568
+125529397384125327 7581700810262708224
+190794716479498585 9657169680132997120
+861091775888149933 11942476880893968384
+862633121306157000 4274744957882859520
+402269847520941040 11890917606686720
+996191617875277478 12197551110348603392
+374798632869251072 16108188243685539840
+247590527292312805 3858717815305618432
+174095638187604635 4137925613572849664
+380993258275196171 12311526125789249536
+763804216531940678 11488916199449296896
+639999400553165313 1981606515406733312
+80647357003050471 2206418746080231424
+882352911550804187 316527982324249929
+95364623845355664 4425153587307347968
+413263032078564973 3803940977817681920
+328457983191576238 10286860838186778624
+507383938963953011 1205976210190893056
+736679251241197382 17828010906227408896
+111032714677491468 8059636854560784384
+114201152382051745 7250045961327476736
+```
+
+We get just a binary and a text file with a list of pairs of numbers. Running the binary, it prompts us to answer the output for a function and then almost instantly tells us that we were too slow. Obviously, this means we must find some efficient way to compute this answer.
+
+Opening up the binary, we can see the main function here. I've renamed some of the functions and variables to make it easier to read.
+
+```c title="main.c"
+int32_t main(int32_t argc, char** argv, char** envp) {
+    void* fsbase;
+    int64_t rax = *(uint64_t*)((char*)fsbase + 0x28);
+    srand(time(nullptr));
+    int32_t res = 1;
+    int64_t n = (int64_t)(rand() % 29 + 32);
+    int64_t x = f(n);
+    res = do_level("Easy", n, x);
+
+    if (res) {
+        n = (int64_t)(rand() % 0x15f90 + 0x2710);
+        x = f(n);
+        res = do_level("Medium", n, x);
+    }
+
+    if (!res)
+        goto label_401d56;
+
+    int32_t result;
+
+    if (parse_solutions_txt(&n, &x)) {
+        res = do_level("Hard", n, x);
+    label_401d56:
+
+        if (!res) {
+            puts("\nYou failed a level.");
+            result = 1;
+        } else {
+            puts("\nCongratulations! All levels pa…");
+            void var_118;
+
+            if (!print_flag(&var_118, 0x100)) {
+                fwrite("Passed, but couldn't read flag f…", 1, 0x25, stderr);
+                result = 1;
+            } else {
+                printf("Flag: %s\n", &var_118);
+                result = 0;
+            }
+        }
+        else {
+            fprintf(stderr, "\nHard level setup failed. Check…", "solutions.txt",
+                    "\nHard level setup failed. Check…");
+            result = 1;
+        }
+
+        *(uint64_t*)((char*)fsbase + 0x28);
+
+        if (rax == *(uint64_t*)((char*)fsbase + 0x28))
+            return result;
+
+        __stack_chk_fail();
+        /* no return */
+    }
+}
+```
+
+To get the flag, we have to parse through 3 levels of verification. The first two levels are fairly simple, the binary generates a random small number (between 32 and 61) and a random medium number (between 10k and 100k). It then calls the function `f` with these arguments, and then calls `do_level`, which expects us to input the correct value of `f(n)` given `n` in 1 second.
+
+Here is the actual function `f`:
+
+```c title="main.c"
+int64_t f(int64_t n) {
+    void* fsbase;
+    int64_t rax = *(uint64_t*)((char*)fsbase + 0x28);
+    int64_t result;
+
+    if (n <= 0x1e)
+        result = 0;
+    else if (n != 0x1f) {
+        uint64_t arr[0x20];
+        __builtin_memset(&arr, 0, 0x100);
+        arr[0x1f] = 1;
+        int64_t j = 1;
+        uint64_t i = 0;
+
+        for (int64_t _ = 0x20; n >= _; _ += 1) {
+            int64_t tmp = j - arr[i];
+            arr[i] = j;
+            j += tmp;
+            i = (uint64_t)(i + 1) & 0x1f;
+        }
+
+        result = arr[(uint64_t)(i + 0x1f) & 0x1f];
+    } else
+        result = 1;
+
+    *(uint64_t*)((char*)fsbase + 0x28);
+
+    if (rax == *(uint64_t*)((char*)fsbase + 0x28))
+        return result;
+
+    __stack_chk_fail();
+    /* no return */
+}
+```
+The function reserves a 32 length array, then successively computes values starting from the 32th iteration. If the input `n` is less than or equal to 32, the answer is hard-coded. 
+
+With a quick Python re-implementation, we can see that it seems to follow a strict pattern at first, but then suddenly starts to diverge.
+```python 
+def f(n):
+    if n <= 30:
+        return 0
+    elif n == 31:
+        return 1
+    else:
+        arr = [0] * 32
+        arr[31] = 1
+        j = 1
+        i = 0
+
+        for _ in range(32, n + 1):
+            tmp = j - arr[i]
+            arr[i] = j
+            j += tmp
+            i = (i + 1) & 0x1f
+
+        return arr[(i + 31) & 0x1f]
+
+for i in range(32, 100):
+    print(i, f(i))
+```
+```text
+32 1
+33 2
+34 4
+35 8
+36 16
+37 32
+38 64
+39 128
+40 256
+41 512
+42 1024
+43 2048
+44 4096
+45 8192
+46 16384
+47 32768
+48 65536
+49 131072
+50 262144
+51 524288
+52 1048576
+53 2097152
+54 4194304
+55 8388608
+56 16777216
+57 33554432
+58 67108864
+59 134217728
+60 268435456
+61 536870912
+62 1073741824
+63 2147483648
+64 4294967295
+65 8589934589
+66 17179869176
+67 34359738348
+68 68719476688
+69 137438953360
+70 274877906688
+```
+
+At first, it seems to follow a pattern of $2^{32-n}$, but after 64 that turns out to be incorrect. Additionally, since the datatypes are 64-bit, at some point it would overflow and wrap around as well.
+
+Let's try to represent the formula mathematically. For now, we assume that $n \geq 32$. Instead of considering $f$ as a function, we can consider it as a sequence of numbers. Thus, instead of finding $f(n)$, we can find the $n$th number in the sequence, or $F_n$.
+```python
+for _ in range(32, n + 1):
+    tmp = j - arr[i]  
+    arr[i] = j # arr[i] = F_n = j
+    # update for F_{n+1}
+    j += tmp # tmp = j - arr[i]
+    i = (i + 1) & 0x1f
+
+return arr[(i + 31) & 0x1f] # return F_n
+```
+When calculating $F_n$, we can see that we are essentially just returning the previous value of $j$ before it is updated, meaning $arr[i] = F_n = j$. Then, when we update $j$, we are increasing it by `tmp`, which is the difference between the current value of $j$ and the previous value of $arr[i]$.
+$$
+F_n = j \\
+F_{n+1} = j_{nxt} \\
+tmp = j - arr[i] \\
+$$
+$$
+j_{nxt} = j + tmp \\
+j_{nxt} = j + (j - arr[i]) \\
+$$
+$$
+F_{n+1} = 2F_n - arr[i] 
+$$
+
+Finally, `arr[i]` is the value that was previously assigned when we were last in this position in `arr`. Looping through the entire buffer to reach the same spot again takes 32 iterations, so the previous value of `arr[i]` must be the 32th previous value in the sequence, or $F_{n-32}$.
+
+This gives us $F_{n+1} = 2F_n - F_{n-32}$.
+
+Thus, we have a recurrence relation of the form $F_n = 2F_{n-1} - F_{n-33}$, which we can use to compute the value of $F_n$ for any $n$. Our base case is can be the simple powers of two pattern when $32 \leq n < 64$.
+
+There are plenty of methods to calculate a recurrence relation quickly, but the easiest one is to use matrix exponentiation. We can represent the relation as a matrix multiplication, which allows us to compute it in $O(log(n))$ time.
+
+Here is my final solve script. I've done some small optimizations like starting from 63 as the base instead of 32, and I ended up having to use sage due to the fact that we are using 64-bit integers, or working in modulo $2^{64}$.
+
+```python title="solve.py"
+from pwn import *
+import ctypes
+from sage.all import *
+from functools import cache
+
+# r = process("./main")
+# nc chall.polygl0ts.ch 9070
+r = remote("chall.polygl0ts.ch", 9070)
+
+@cache
+def f(n):
+    if n < 0x20:
+        return 0
+    arr = [0] * 0x20
+    arr[0x1f] = 1
+    j = 1
+    i = 0
+
+    # all uint64s
+    for itr in range(0x20, n + 1):
+        tmp = j - arr[i]
+        tmp = ctypes.c_uint64(tmp).value
+        arr[i] = j
+        arr[i] = ctypes.c_uint64(arr[i]).value
+        j += tmp
+        j = ctypes.c_uint64(j).value
+        i = (i + 1) & 0x1f
+    
+    return arr[(i + 0x1f) & 0x1f]
+
+
+@cache
+def fast_f(n):
+    if n < 0x40:
+        return f(n)
+    
+    p = 2**64
+    P = Integers(p)
+    k = 33
+
+    # Transition matrix M: a_n = a_{n-1} + a_{n-k}
+    M = Matrix(P, k, k)
+
+    # Fill in shift: M[i][i+1] = 1 for i = 0..k-2
+    for i in range(k - 1):
+        M[i, i+1] = 1
+
+    # F_n = 2F_{n-1} - F_{n-k}
+    M[k-1, 0] = -1
+    M[k-1, k-1] = 2
+
+    vec = [1, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824, 2147483648]
+    v0 = vector(P, vec)
+
+    if n < k:
+        return v0[n]
+    Mn = M**(n - 63)
+    return (Mn * v0)[k - 1]
+
+
+line = r.recvline_contains(b'What is f(')
+n = int(line.split(b'(')[1].split(b')')[0])
+x = 1 << (n - 32)
+print(f"f({n}) = {x}")
+r.sendlineafter(b'Your answer: ', str(x).encode())
+
+line = r.recvline_contains(b'What is f(')
+n = int(line.split(b'(')[1].split(b')')[0])
+x = fast_f(n)
+print(f"f({n}) = {x}")
+r.sendlineafter(b'Your answer: ', str(x).encode())
+
+line = r.recvline_contains(b'What is f(')
+n = int(line.split(b'(')[1].split(b')')[0])
+x = fast_f(n)
+print(f"f({n}) = {x}")
+r.sendlineafter(b'Your answer: ', str(x).encode())
+
+r.interactive()
+```
+Running this gives us our flag: `EPFL{are_you_serious_fibonacci_again}`
+```shell
+$ python3 solve.py
+[+] Opening connection to chall.polygl0ts.ch on port 9070: Done
+f(54) = 4194304
+f(13895) = 14979957406756292168
+f(379402583153428697) = 889007270209280
+[*] Switching to interactive mode
+
+Received: 889007270209280 (took 0.867 s)
+Correct! Proceeding...
+
+Congratulations! All levels passed!
+Flag: EPFL{are_you_serious_fibonacci_again}
+[*] Got EOF while reading in interactive
+[*] Closed connection to chall.polygl0ts.ch port 9070
+```
+
+# rev - Jump Around
+> Jump Around from House of Pain: https://www.youtube.com/watch?v=MdxCfAb-ROM
+>
+> Points: 116 | Solves: 9
+
+[out](../../static/2025/lakectf-finals-writeups/jumparound/out) 
+
+This challenge mainly revolved around an obfuscation technique where each assembly instruction was contained inside its own function and after executing one instruction, it would jump or call a function corresponding to the next instruction. This made it very difficult to follow the control flow of the program, as it was not linear at all.
+
+Most of the work on this challenge was done by my teammate [kroot](https://kroot.me/), who ~~vibe coded~~ created a gdb script to dump what should be the actual instructions. As I don't have access to it or how it was created, I'll simply go over the part that I did, which was taking the output of that script and analyzing it.
+
+Here's what the first portion of the dump looked like:
+```asm
+f208:	mov    rbp,rsp
+faa0:	push   rbx
+f5f1:	sub    rsp,0x148
+f742:	mov    rax,QWORD PTR fs:0x28
+f708:	mov    QWORD PTR [rbp-0x18],rax
+f2ae:	xor    eax,eax
+f8db:	mov    rax,rsp
+f4ad:	mov    rbx,rax
+f85f:	mov    DWORD PTR [rbp-0x144],0x30
+fab8:	mov    eax,DWORD PTR [rbp-0x144]
+f8f5:	movsxd rdx,eax
+f826:	sub    rdx,0x1
+f97f:	mov    QWORD PTR [rbp-0x140],rdx
+f7ba:	cdqe
+f880:	mov    edx,0x10
+fad5:	sub    rdx,0x1
+f530:	add    rax,rdx
+f400:	mov    esi,0x10
+f949:	mov    edx,0x0
+f359:	div    rsi
+f99d:	imul   rax,rax,0x10
+f965:	sub    rsp,rax
+f4e1:	mov    rax,rsp
+f258:	mov    QWORD PTR [rbp-0x138],rax
+f89c:	mov    rax,QWORD PTR [rbp-0x138]
+f4c7:	mov    rsi,rax
+f762:	lea    rax,[rip+0xae7]        # 0x555555560250
+f564:	mov    rdi,rax
+fa84:	mov    eax,0x0
+f697:	call   0x555555555080 <__isoc99_scanf@plt>
+f79b:	mov    QWORD PTR [rbp-0x70],0x0
+f723:	mov    QWORD PTR [rbp-0x68],0x0
+f6b3:	movabs rax,0xa6d2ae2816157e2b
+f31e:	movabs rdx,0x3c4fcf098815f7ab
+f660:	mov    QWORD PTR [rbp-0x60],rax
+f645:	mov    QWORD PTR [rbp-0x58],rdx
+f458:	movabs rax,0xff2bf601bd7f2cc4
+f8ba:	movabs rdx,0xa19d6771c2a58e2
+f780:	mov    QWORD PTR [rbp-0x50],rax
+f479:	mov    QWORD PTR [rbp-0x48],rdx
+f9f6:	movabs rax,0x4e4eaf7ead01a0a8
+f373:	movabs rdx,0xda67f3d74d336f23
+fa4d:	mov    QWORD PTR [rbp-0x40],rax
+f7ed:	mov    QWORD PTR [rbp-0x38],rdx
+f2c7:	movabs rax,0xc1c8da839ec6d06e
+f9b8:	movabs rdx,0x6f0e62d284fdefad
+f3e5:	mov    QWORD PTR [rbp-0x30],rax
+f3ca:	mov    QWORD PTR [rbp-0x28],rdx
+f515:	lea    rdx,[rbp-0x70]
+faf0:	lea    rcx,[rbp-0x60]
+f808:	lea    rax,[rbp-0x130]
+f62b:	mov    rsi,rcx
+f54a:	mov    rdi,rax
+fa31:	call   0x5555555568c0
+```
+
+If you've looked at normal CTF crackme binaries before, this code should look pretty familiar. At the top, we have function initialization, where it reserves some stack space and also stores a stack canary. Then, there's a call for user input, follow by some constants that are loaded onto the stack.
+
+Funnily enough, searching the first constant results in some pages about AES, with the first 16 bytes of these constants being a commonly used AES key.
+
+![https://www.google.com/search?q=2b7e151628aed2a6](/img/writeups/2025/lakectf-finals-writeup/aeskeygoogle.png)
+
+Peeking at the readonly data, we also have what appears to be the standard AES S-box, inverse S-Box, and Rcon tables. 
+
+![AES S-Box, Inverse S-Box, and Rcon tables](/img/writeups/2025/lakectf-finals-writeup/aesconsts.png) 
+
+From here, we can do one test with `ltrace` just to see what happens, which appears to be very little:
+```shell
+$ ltrace ./out
+__isoc99_scanf(0x5627e5d3e250, 0x7ffe045c5140, 15, 0x5627e5d3fdd0AAAA
+)        = 1
+memcmp(0x7ffe045c5270, 0x7ffe045c5140, 48, 0x7ffe045c5140)                = 0xffffffc7
+puts("FAILURE!"FAILURE!
+)                                                          = 9
++++ exited (status 0) +++
+```
+
+However, given the context we've seen, it's safe to guess that there's AES encryption going on with our input, which is then compared to some other data in the `memcmp`.
+
+Writing a quick script in Python, we can see that our guess is pretty close.
+```python title="test.py"
+from Crypto.Cipher import AES
+
+key = (0xa6d2ae2816157e2b).to_bytes(8, 'little') + (0x3c4fcf098815f7ab).to_bytes(8, 'little')
+enc = [
+    0xff2bf601bd7f2cc4,
+    0xa19d6771c2a58e2,
+    0x4e4eaf7ead01a0a8,
+    0xda67f3d74d336f23,
+    0xc1c8da839ec6d06e,
+    0x6f0e62d284fdefad,
+]
+enc = b''.join([i.to_bytes(8, 'little') for i in enc])
+cipher = AES.new(key, AES.MODE_ECB)
+print(cipher.decrypt(enc))
+```
+```shell
+$ python3 test.py
+b'EPFL{mom_please_\xb7X\x10\xcd^\x9bN\x8c\x911D{(\xbb`U\xc1\xcer\xd9\x0c\xda-:J\x00]>\x88\xac\x1a\xda'
+```
+
+However, it looks like only our first block is valid. Thankfully, one small change is enough to make it work, we simply use CBC mode instead with an IV of all null bytes, which gives us the flag.
+```diff
+- cipher = AES.new(key, AES.MODE_ECB)
++ cipher = AES.new(key, AES.MODE_CBC, iv=b'\x00' * 16)
+```
+```shell
+$ python3 test.py
+b'EPFL{mom_please_stop_messing_my_instructions__}\x00'
+```
+
+This was a pretty funny challenge where trusting your gut and simply guessing some aspects of the challenge could save a lot of time (I didn't even bother opening the binary in a decompiler).
+
+# rev - Hygiene
+> I know not to roll my own crypto and I have used a public and audited cryptographic library for my newest cli encryption program. Surely nothing could go wrong...
+>
+> `nc chall.polygl0ts.ch 9034`
+>
+> Points: 140 | Solves: 7
+
+[chal](../../static/2025/lakectf-finals-writeups/hygiene/chal)
+
+This challenge was a bit less reversing and more program analysis. The binary came with symbols so most of the functions looked pretty nice. 
+```c title="main.c"
+int32_t main(int32_t argc, char** argv, char** envp)
+    setbuf(fp: stdin, buf: nullptr)
+    setbuf(fp: __TMC_END__, buf: nullptr)
+    setbuf(fp: stderr, buf: nullptr)
+    read(fd: open(file: "flag.txt", oflag: 0), buf: &flag, nbytes: 0x100)
+    
+    if (argc == 1)
+        int32_t fd_1 = open(file: "/dev/urandom", oflag: 0)
+        
+        if (fd_1 < 0)
+            exit(status: 1)
+        
+        if (read(fd: fd_1, buf: &instance_key, nbytes: 0x20) != 0x20)
+            exit(status: 1)
+    else
+        int32_t fd = open(file: argv[1], oflag: 0)
+        
+        if (fd < 0)
+            __printf_chk(flag: 1, format: "Bad keyfile")
+            exit(status: 1)
+        
+        if (read(fd, buf: &instance_key, nbytes: 0x20) != 0x20)
+            exit(status: 1)
+    
+    __builtin_memset(s: &iv, c: 0, n: 0x18)
+    initial_setup()
+    chall()
+    return 0
+
+int64_t initial_setup()
+    void* fsbase
+    int64_t rax = *(fsbase + 0x28)
+    char s[0x108]
+
+    __sprintf_chk(&s, flag: 1, slen: 0x100, format: "Hi. If you have been able to dec…", &flag)
+    int128_t var_158 = instance_key[0].o
+    int128_t var_148 = instance_key[0x10][0].o
+    int128_t var_138 = iv[0].o
+    int64_t var_128 = iv[0x10][0].q
+    chacha20_encrypt_and_destroy(dst: "ciphertext", src: &s, len: 0x100, block: 0)
+    
+    if (rax == *(fsbase + 0x28))
+        return 0
+    
+    __stack_chk_fail()
+
+int64_t chall()
+    void* fsbase
+    int64_t rax = *(fsbase + 0x28)
+    int32_t rax_2
+    
+    while (true)
+        puts(str: "Menu:\n1. Encrypt data\n2. Print…")
+        puts(str: "What do you want to do?")
+        char buf[0x180]
+        rax_2 = get_num(&buf, n: 5)
+        
+        if (rax_2 != 1)
+            break
+        
+        puts(str: "How many characters do you want …")
+        int32_t len_1 = get_num(&buf, n: 0xa)
+        int64_t len = sx.q(len_1)
+        puts(str: "Which block do you want to encry…")
+        int32_t block = get_num(&buf, n: 0xa)
+        
+        if (sx.q(block) - 3 > 99997)
+            __printf_chk(flag: 1, format: "Nope, not giving you another enc…")
+        else if (len u> 379)
+            __printf_chk(flag: 1, format: "Maximum number of characters is …", 0x17b)
+        else
+            puts(str: "Input the text you want to encry…")
+            if (&buf == __fgets_chk(&buf, size: 384, n: len_1 + 2, fp: stdin))
+                if (buf[1 + len] != 0)
+                    __printf_chk(flag: 1, format: "YOU LIED TO ME ABOUT THE LENGHT!…")
+                    exit(status: 1)
+                
+                int128_t var_208_1 = instance_key[0].o
+                int128_t var_1f8_1 = instance_key[0x10][0].o
+                int128_t var_1e8_1 = iv[0].o
+                int64_t var_1d8_1 = iv[0x10][0].q
+                chacha20_encrypt_and_destroy(dst: &buf, src: &buf, len, block)
+                puts(str: "Here is your encrypted text:")
+                printhex(&buf, len)
+    
+    if (rax_2 == 2)
+        printhex("ciphertext", 0x100)
+        exit(status: 0)
+        
+    if (rax == *(fsbase + 0x28))
+        return 0
+    
+    __stack_chk_fail()
+```
+
+The binary first generates a key to be used for ChaCha20 encryption, either from `/dev/urandom` or from a specified file. Then, it encrypts a message containing the flag with this key and stores it at the location of `ciphertext`.
+
+From here, we get a standard encryption oracle, where we can query the oracle with a block number and a message to encrypt. The block number is used to determine which block of the ChaCha keystream is used to encrypt the message. We can also get the encrypted flag message and exit the program.
+
+We can assume that the ChaCha20 implementation is correct, given the description, so let's focus on the rest of the program.
+
+## no block reuse
+
+If you have some crypto experience, perhaps you might try to encrypt some text with the same keystream as the one that encrypted the flag. This would let us recover the keystream as we would have a known plaintext / ciphertext pair, which we could then use to decrypt the encrypted flag message.
+
+However, unfortunately there is no way to use the same blocks as the ones used to encrypt the flag, as the program will only allow us to use blocks between 3 and 100000.
+
+```c
+int32_t block = get_num(&buf, n: 0xa)
+
+if (sx.q(block) - 3 > 99997)
+    __printf_chk(flag: 1, format: "Nope, not giving you another enc…")
+```
+
+The sign extension on `block` means that even if we pass in a block below 3, it would underflow through subtraction and cause the if statement to still be true.
+
+## maybe this is useful
+
+Looking at the other parameter we can input, there actually is a small bug here
+```c
+else if (len u> 379)
+    __printf_chk(flag: 1, format: "Maximum number of characters is …", 0x17b)
+else
+    puts(str: "Input the text you want to encry…")
+    
+    if (&buf == __fgets_chk(&buf, size: 384, n: len_1 + 2, fp: stdin))
+        if (buf[1 + len] != 0)
+            __printf_chk(flag: 1, format: "YOU LIED TO ME ABOUT THE LENGHT!…")
+            exit(status: 1)
+            noreturn
+        
+        int128_t var_208_1 = instance_key[0].o
+        int128_t var_1f8_1 = instance_key[0x10][0].o
+        int128_t var_1e8_1 = iv[0].o
+        int64_t var_1d8_1 = iv[0x10][0].q
+        chacha20_encrypt_and_destroy(dst: &buf, src: &buf, len, block)
+        puts(str: "Here is your encrypted text:")
+        printhex(&buf, len)
+```
+
+Notice that the program doesn't check that we input as many characters as the length we specified, it only checks that the character at `buf[1 + len]` is null. This means that we could potentially have the encrypted plaintext be left over stack data from previous calls.
+
+Running through GDB quickly, we see that the ChaCha key itself just so happens to be on the stack in our input buffer, uncleared:
+```gdb
+$rbx+ 0x7fffffffd420|+0x0000|+000: 0x2f2f2f000a000a33 [buf]
+      0x7fffffffd428|+0x0008|+001: 0x66416b941a777300  <-  canary
+      0x7fffffffd430|+0x0010|+002: 0x00005555555581c0 <flag>  ->  0x0000000000000000
+      0x7fffffffd438|+0x0018|+003: 0x00007fffffffd4d0  ->  0x0706050403020100
+      0x7fffffffd440|+0x0020|+004: 0x0000000000000100
+      0x7fffffffd448|+0x0028|+005: 0x0000555555558080 <encrypt_header>  ->  0x59fab6808cca4ac9
+      0x7fffffffd450|+0x0030|+006: 0x0000555555555553 <main>  ->  0xfb8908ec83485355
+      0x7fffffffd458|+0x0038|+007: 0x0000555555557dd8  ->  0x0000555555555180  ->  0x301d3d80fa1e0ff3
+      0x7fffffffd460|+0x0040|+008: 0x00007ffff7ffd040 <_rtld_global>  ->  0x00007ffff7ffe2e0  ->  0x0000555555554000  ->  ...
+      0x7fffffffd468|+0x0048|+009: 0x00005555555551ff <chacha20_encrypt_and_destroy+0x1f>  ->  0xed85481874dc3949
+      0x7fffffffd470|+0x0050|+010: 0x00007fffffffd4d0  ->  0x0706050403020100
+      0x7fffffffd478|+0x0058|+011: 0x00007fffffffd718  ->  0x00007fffffffd9b9  ->  0x552f632f746e6d2f '/mnt/c/Users/flocto/Documents/Cybersecurity/2025/LakeCTFFinals/h'...
+      0x7fffffffd480|+0x0060|+012: 0x00007fffffffd718  ->  0x00007fffffffd9b9  ->  0x552f632f746e6d2f '/mnt/c/Users/flocto/Documents/Cybersecurity/2025/LakeCTFFinals/h'...
+      0x7fffffffd488|+0x0068|+013: 0x000055555555552a <initial_setup+0x8d>  ->  0x0824848b48dc8948
+      0x7fffffffd490|+0x0070|+014: 0x4242424241414141 'AAAABBBBCCCCDDDD0000111122223333' [ChaCha key]
+      0x7fffffffd498|+0x0078|+015: 0x4444444443434343 'CCCCDDDD0000111122223333'
+      0x7fffffffd4a0|+0x0080|+016: 0x3131313130303030 '0000111122223333'
+      0x7fffffffd4a8|+0x0088|+017: 0x3333333332323232 '22223333'
+      0x7fffffffd4b0|+0x0090|+018: 0x0000000000000000
+      0x7fffffffd4b8|+0x0098|+019: 0x0000000000000000
+      0x7fffffffd4c0|+0x00a0|+020: 0x0000000000000000
+```
+
+This means we can specify a length just beyond that of the ChaCha key, input in no characters, then the program will happily spit out the encrypted key. Wait... that isn't too useful! 
+
+Thankfully, since ChaCha is a stream cipher, simply repeating the encryption again will decrypt the key and spit it out to use in a useful format. All that's left is to script this all together and we have our flag!
+
+```python title="solve.py"
+from pwn import *
+from Crypto.Cipher import ChaCha20
+
+key = open('keyfile', 'rb').read()
+iv = b'\x00' * 0x8
+cipher = ChaCha20.new(key=key, nonce=iv)
+BLOCK_SIZE = 0x40
+# r = process(['./chal', 'keyfile'])
+# nc chall.polygl0ts.ch 9034
+r = remote('chall.polygl0ts.ch', 9034)
+
+def enc(block, pt, len):
+    r.sendlineafter(b'to do?\n', b'1')
+    r.sendlineafter(b'to encrypt?\n', str(len).encode())
+    r.sendlineafter(b'to encrypt?\n', str(block).encode())
+    r.sendlineafter(b'to encrypt:\n', pt)
+    # r.sendlineafter(b'to encrypt:\n', b'B' * 380)
+    r.recvuntil(b' text:\n')
+    return r.recvline().strip()
+
+enc(3, b'', 150)
+dec = enc(3, b'', 150)
+dec = bytes.fromhex(dec.decode())
+key = dec[112:144]
+print(f'key: {key.hex()}')
+
+# r.interactive()
+r.sendlineafter(b'to do?\n', b'2')
+ct = bytes.fromhex(r.recvline().strip().decode())
+
+cipher = ChaCha20.new(key=key, nonce=iv)
+pt = cipher.decrypt(ct)
+
+print(pt)
+```
+```shell
+$ python3 solve.py
+[+] Opening connection to chall.polygl0ts.ch on port 9034: Done
+key: ff2a9d3e4f6a08e5406947061369dd68e1022cb62f3a112e998b011bb00e63df
+b'Hi. If you have been able to decrypt this text, you deserve the flag for this chall: EPFL{remember_to_clean_your_keys_and_beware_of_stack_parameters}\n\n\x00\xa0\xb6-L\xf3\x7f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf5\xe3\x14L\xf3\x7f\x00\x00\x0e\x00\x00\x00\x00\x00\x00\x00\xa0\xb6-L\xf3\x7f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xe9H\x07\x00k\xfal\x00v-L\xf3\x7f\x00\x00\xad\xa5\x14L\xf3\x7f\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x7f\x15\x14L\xf3\x7f\x00\x00\x00@>\xbf\xfd\x7f\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00'
+[*] Closed connection to chall.polygl0ts.ch port 9034
+```
+
+# rev - one vs all
+> I've proven myself impossible to beat at this but you can take a try.
+>
+> `nc chall.polygl0ts.ch 9076`
+>
+> Points: 500 | Solves: 0
+
+[main](../../static/2025/lakectf-finals-writeups/onevsall/main) | [program.bpf](../../static/2025/lakectf-finals-writeups/onevsall/program.bpf)
+
+Finally, the last unblooded rev. Although I didn't manage to solve this one during the CTF, I took a look at it afterward and manage to upsolve it first. 
+
+The main gimmick of the challenge was the fact that it was a compiled [Lean](https://lean-lang.org/) binary, which then had a BPF program interpreter that ran the provided BPF program. Both of these were non-standard and made it hard to get a good overview of the program.
+
+*To be finished.*
