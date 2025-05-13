@@ -14,16 +14,10 @@ permissions:
   pages: write
   id-token: write
 
-inputs:
-  # Default parameters for deployment
-  node-version:
-    description: "The node version to use"
-    required: false
-    default: "22"
-  path:
-    description: "Path of the directory containing the site"
-    required: false
-    default: "."
+# Default parameters for the workflow
+env:
+  NODE_VERSION: '22'
+  SITE_PATH: .
 
 jobs:
   build:
@@ -34,19 +28,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: "${{ inputs.path }}/package-lock.json"
+          cache-dependency-path: "${{ env.SITE_PATH }}/package-lock.json"
       - name: Install dependencies
         run: npm install
       - name: Apply rehype pretty code patch
-        run: git apply --ignore-space-change --ignore-whitespace ${{ inputs.path }}/patches/rehype-pretty-code+0.14.1.patch
+        run: git apply --ignore-space-change --ignore-whitespace ${{ env.SITE_PATH }}/patches/rehype-pretty-code+0.14.1.patch
       - name: Build the project
         run: npm run build
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "${{ inputs.path }}/dist/"
+          path: "${{ env.SITE_PATH }}/dist/"
 
   deploy:
     needs: build
