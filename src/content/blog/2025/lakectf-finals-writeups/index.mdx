@@ -20,7 +20,7 @@ Unfortunately, we didn't manage to win, only getting 4th place. Still, I really 
 >
 > Points: 110 | Solves: 10
 
-```sh title="challenge_fakeflag.sh"
+```sh title="challenge_fakeflag.sh" collapse={2-21}
 #!/bin/bash
 
 # Set colors for a more dynamic experience
@@ -92,7 +92,7 @@ while true; do
 done
 ```
 
-```Dockerfile title="Dockerfile"
+```Dockerfile title="Dockerfile" collapse={1-100}
 # Stage 1: Build the minimal environment
 FROM ubuntu:20.04 AS base
 
@@ -197,7 +197,7 @@ Flag: `EPFL{LooKs_l1k3_4lph4numeric_filter_1s_n0t_enough}`
 > Points: 116 | Solves: 9
 
 [main](../../static/2025/lakectf-finals-writeups/fastprocess/main) | [solutions.txt](../../static/2025/lakectf-finals-writeups/fastprocess/solutions.txt)
-```text title="solutions.txt"
+```text title="solutions.txt" collapse={1-100}
 419039093524866021 5253480278082363392
 129512260564226652 13124866128201383936
 749069362794463437 1232252044832186368
@@ -426,7 +426,7 @@ def f(n):
 for i in range(32, 100):
     print(i, f(i))
 ```
-```text
+```text collapse={2-20} {32-34}
 32 1
 33 2
 34 4
@@ -740,7 +740,7 @@ This was a pretty funny challenge where trusting your gut and simply guessing so
 [chal](../../static/2025/lakectf-finals-writeups/hygiene/chal)
 
 This challenge was a bit less reversing and more program analysis. The binary came with symbols so most of the functions looked pretty nice. 
-```c title="main.c"
+```c title="main.c" collapse={2-28, 31-45, 48-93}
 int32_t main(int32_t argc, char** argv, char** envp)
     setbuf(fp: stdin, buf: nullptr)
     setbuf(fp: __TMC_END__, buf: nullptr)
@@ -834,6 +834,7 @@ int64_t chall()
         return 0
     
     __stack_chk_fail()
+
 ```
 
 The binary first generates a key to be used for ChaCha20 encryption, either from `/dev/urandom` or from a specified file. Then, it encrypts a message containing the flag with this key and stores it at the location of `ciphertext`.
@@ -884,7 +885,7 @@ else
 Notice that the program doesn't check that we input as many characters as the length we specified, it only checks that the character at `buf[1 + len]` is null. This means that we could potentially have the encrypted plaintext be left over stack data from previous calls.
 
 Running through GDB quickly, we see that the ChaCha key itself just so happens to be on the stack in our input buffer, uncleared:
-```gdb
+```gdb {"buf starts here": 1} {"chacha key here": 15}
 $rbx+ 0x7fffffffd420|+0x0000|+000: 0x2f2f2f000a000a33 [buf]
       0x7fffffffd428|+0x0008|+001: 0x66416b941a777300  <-  canary
       0x7fffffffd430|+0x0010|+002: 0x00005555555581c0 <flag>  ->  0x0000000000000000
