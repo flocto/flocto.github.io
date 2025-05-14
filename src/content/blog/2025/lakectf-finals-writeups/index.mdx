@@ -13,7 +13,7 @@ Recently we ([.;,;.](https://ctf.gg/)) got to travel to Switzerland and particip
 
 Unfortunately, we didn't manage to win, only getting 4th place. Still, I really enjoyed the challenges, so here's writeups for the challenges I solved, which were mostly rev with one misc.
 
-# misc - Craft The Flag
+## misc - Craft The Flag
 > Oh wait CTF doesn't mean Craft The Flag
 >
 > `nc chall.polygl0ts.ch 9098`
@@ -92,7 +92,7 @@ while true; do
 done
 ```
 
-```Dockerfile title="Dockerfile" collapse={1-100}
+```Docker title="Dockerfile" collapse={1-11,16-24,28-100} {"Moves ls and cat to /restricted-bin":12-15}
 # Stage 1: Build the minimal environment
 FROM ubuntu:20.04 AS base
 
@@ -162,7 +162,7 @@ Checking the Dockerfile, we see that there are helpful `cat` and `ls` binaries i
 
 From here, we can simply allow it to print every file in the directory, which should print the original sh script and give us the flag.
 
-```shell
+```shell "EPFL{LooKs_l1k3_4lph4numeric_filter_1s_n0t_enough}"
 $ nc chall.polygl0ts.ch 9098
 ---------------------------------------------------
   Welcome to my new 1.8.8 Minecraft Server!
@@ -187,9 +187,7 @@ $
 ... [truncated]
 ```
 
-Flag: `EPFL{LooKs_l1k3_4lph4numeric_filter_1s_n0t_enough}`
-
-# rev - Fastprocess
+## rev - Fastprocess
 > Classic example of a bad rev challenge. File 'solutions.txt' is only an example. On the remote, it is regenerated every run.
 >
 > `nc chall.polygl0ts.ch 9070`
@@ -426,7 +424,7 @@ def f(n):
 for i in range(32, 100):
     print(i, f(i))
 ```
-```text collapse={2-20} {32-34}
+```text collapse={2-28} {"                 notice the power of two pattern breaking": 32-34}
 32 1
 33 2
 34 4
@@ -499,13 +497,13 @@ Finally, `arr[i]` is the value that was previously assigned when we were last in
 
 This gives us $F_{n+1} = 2F_n - F_{n-32}$.
 
-Thus, we have a recurrence relation of the form $F_n = 2F_{n-1} - F_{n-33}$, which we can use to compute the value of $F_n$ for any $n$. Our base case is can be the simple powers of two pattern when $32 \leq n < 64$.
+Thus, we have a recurrence relation of the form $F_n = 2F_{n-1} - F_{n-33}$, which we can use to compute the value of $F_n$ for any $n$. Our base case(s) can be the simple powers of two pattern when $32 \leq n < 64$.
 
 There are plenty of methods to calculate a recurrence relation quickly, but the easiest one is to use matrix exponentiation. We can represent the relation as a matrix multiplication, which allows us to compute it in $O(log(n))$ time.
 
 Here is my final solve script. I've done some small optimizations like starting from 63 as the base instead of 32, and I ended up having to use sage due to the fact that we are using 64-bit integers, or working in modulo $2^{64}$.
 
-```python title="solve.py"
+```python title="solve.py" collapse={12-29,34-58}
 from pwn import *
 import ctypes
 from sage.all import *
@@ -587,7 +585,7 @@ r.sendlineafter(b'Your answer: ', str(x).encode())
 r.interactive()
 ```
 Running this gives us our flag: `EPFL{are_you_serious_fibonacci_again}`
-```shell
+```shell "EPFL{are_you_serious_fibonacci_again}"
 $ python3 solve.py
 [+] Opening connection to chall.polygl0ts.ch on port 9070: Done
 f(54) = 4194304
@@ -604,7 +602,7 @@ Flag: EPFL{are_you_serious_fibonacci_again}
 [*] Closed connection to chall.polygl0ts.ch port 9070
 ```
 
-# rev - Jump Around
+## rev - Jump Around
 > Jump Around from House of Pain: https://www.youtube.com/watch?v=MdxCfAb-ROM
 >
 > Points: 116 | Solves: 9
@@ -616,7 +614,7 @@ This challenge mainly revolved around an obfuscation technique where each assemb
 Most of the work on this challenge was done by my teammate [kroot](https://kroot.me/), who ~~vibe coded~~ created a gdb script to dump what should be the actual instructions. As I don't have access to it or how it was created, I'll simply go over the part that I did, which was taking the output of that script and analyzing it.
 
 Here's what the first portion of the dump looked like:
-```asm
+```asm {33-48}
 f208:	mov    rbp,rsp
 faa0:	push   rbx
 f5f1:	sub    rsp,0x148
@@ -673,7 +671,7 @@ f54a:	mov    rdi,rax
 fa31:	call   0x5555555568c0
 ```
 
-If you've looked at normal CTF crackme binaries before, this code should look pretty familiar. At the top, we have function initialization, where it reserves some stack space and also stores a stack canary. Then, there's a call for user input, follow by some constants that are loaded onto the stack.
+If you've looked at normal CTF crackme binaries before, this code should look pretty familiar. At the top, we have function initialization, where it reserves some stack space and also stores a stack canary. Then, there's a call for user input, followed by some constants that are loaded onto the stack (highlighted above).
 
 Funnily enough, searching the first constant results in some pages about AES, with the first 16 bytes of these constants being a commonly used AES key.
 
@@ -713,7 +711,7 @@ enc = b''.join([i.to_bytes(8, 'little') for i in enc])
 cipher = AES.new(key, AES.MODE_ECB)
 print(cipher.decrypt(enc))
 ```
-```shell
+```shell 
 $ python3 test.py
 b'EPFL{mom_please_\xb7X\x10\xcd^\x9bN\x8c\x911D{(\xbb`U\xc1\xcer\xd9\x0c\xda-:J\x00]>\x88\xac\x1a\xda'
 ```
@@ -730,7 +728,7 @@ b'EPFL{mom_please_stop_messing_my_instructions__}\x00'
 
 This was a pretty funny challenge where trusting your gut and simply guessing some aspects of the challenge could save a lot of time (I didn't even bother opening the binary in a decompiler).
 
-# rev - Hygiene
+## rev - Hygiene
 > I know not to roll my own crypto and I have used a public and audited cryptographic library for my newest cli encryption program. Surely nothing could go wrong...
 >
 > `nc chall.polygl0ts.ch 9034`
@@ -843,7 +841,7 @@ From here, we get a standard encryption oracle, where we can query the oracle wi
 
 We can assume that the ChaCha20 implementation is correct, given the description, so let's focus on the rest of the program.
 
-## no block reuse
+### no block reuse
 
 If you have some crypto experience, perhaps you might try to encrypt some text with the same keystream as the one that encrypted the flag. This would let us recover the keystream as we would have a known plaintext / ciphertext pair, which we could then use to decrypt the encrypted flag message.
 
@@ -858,7 +856,7 @@ if (sx.q(block) - 3 > 99997)
 
 The sign extension on `block` means that even if we pass in a block below 3, it would underflow through subtraction and cause the if statement to still be true.
 
-## maybe this is useful
+### maybe this is useful
 
 Looking at the other parameter we can input, there actually is a small bug here
 ```c
@@ -885,7 +883,7 @@ else
 Notice that the program doesn't check that we input as many characters as the length we specified, it only checks that the character at `buf[1 + len]` is null. This means that we could potentially have the encrypted plaintext be left over stack data from previous calls.
 
 Running through GDB quickly, we see that the ChaCha key itself just so happens to be on the stack in our input buffer, uncleared:
-```gdb {"buf starts here": 1} {"chacha key here": 15}
+```txt showLineNumbers=false {"buf starts here": 1} {"chacha key here": 15}
 $rbx+ 0x7fffffffd420|+0x0000|+000: 0x2f2f2f000a000a33 [buf]
       0x7fffffffd428|+0x0008|+001: 0x66416b941a777300  <-  canary
       0x7fffffffd430|+0x0010|+002: 0x00005555555581c0 <flag>  ->  0x0000000000000000
@@ -949,7 +947,7 @@ pt = cipher.decrypt(ct)
 
 print(pt)
 ```
-```shell
+```shell "EPFL{remember_to_clean_your_keys_and_beware_of_stack_parameters}"
 $ python3 solve.py
 [+] Opening connection to chall.polygl0ts.ch on port 9034: Done
 key: ff2a9d3e4f6a08e5406947061369dd68e1022cb62f3a112e998b011bb00e63df
@@ -957,7 +955,7 @@ b'Hi. If you have been able to decrypt this text, you deserve the flag for this 
 [*] Closed connection to chall.polygl0ts.ch port 9034
 ```
 
-# rev - one vs all
+## rev - one vs all
 > I've proven myself impossible to beat at this but you can take a try.
 >
 > `nc chall.polygl0ts.ch 9076`
