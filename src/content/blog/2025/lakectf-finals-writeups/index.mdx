@@ -92,7 +92,7 @@ while true; do
 done
 ```
 
-```Docker title="Dockerfile" collapse={1-11,16-24,28-100} {"Moves ls and cat to /restricted-bin":12-15}
+```txt title="Dockerfile" collapse={1-11,16-24,28-100} {"Moves ls and cat to /restricted-bin":12-15}
 # Stage 1: Build the minimal environment
 FROM ubuntu:20.04 AS base
 
@@ -847,7 +847,7 @@ If you have some crypto experience, perhaps you might try to encrypt some text w
 
 However, unfortunately there is no way to use the same blocks as the ones used to encrypt the flag, as the program will only allow us to use blocks between 3 and 100000.
 
-```c
+```c showLineNumbers=false del="sx.q(block) - 3 > 99997"
 int32_t block = get_num(&buf, n: 0xa)
 
 if (sx.q(block) - 3 > 99997)
@@ -859,7 +859,7 @@ The sign extension on `block` means that even if we pass in a block below 3, it 
 ### maybe this is useful
 
 Looking at the other parameter we can input, there actually is a small bug here
-```c
+```c showLineNumbers=false del={6-7}
 else if (len u> 379)
     __printf_chk(flag: 1, format: "Maximum number of characters is …", 0x17b)
 else
@@ -869,7 +869,7 @@ else
         if (buf[1 + len] != 0)
             __printf_chk(flag: 1, format: "YOU LIED TO ME ABOUT THE LENGHT!…")
             exit(status: 1)
-            noreturn
+            
         
         int128_t var_208_1 = instance_key[0].o
         int128_t var_1f8_1 = instance_key[0x10][0].o
@@ -880,9 +880,9 @@ else
         printhex(&buf, len)
 ```
 
-Notice that the program doesn't check that we input as many characters as the length we specified, it only checks that the character at `buf[1 + len]` is null. This means that we could potentially have the encrypted plaintext be left over stack data from previous calls.
+Notice that the program doesn't check that we input as many characters as the length we specified, it only checks that the character at `buf[1 + len]` is null. This means that we could potentially have the encrypted plaintext be left over stack data from previous calls by simply not inputing as many bytes as we claim.
 
-Running through GDB quickly, we see that the ChaCha key itself just so happens to be on the stack in our input buffer, uncleared:
+Running through GDB quickly with a breakpoint just before the `fgets` call, we see that the ChaCha key itself just so happens to be on the stack in our input buffer, uncleared:
 ```txt showLineNumbers=false {"buf starts here": 1} {"chacha key here": 15}
 $rbx+ 0x7fffffffd420|+0x0000|+000: 0x2f2f2f000a000a33 [buf]
       0x7fffffffd428|+0x0008|+001: 0x66416b941a777300  <-  canary
