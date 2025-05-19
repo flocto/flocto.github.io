@@ -481,16 +481,14 @@ return arr[(i + 31) & 0x1f] # return F_n
 ```
 When calculating $F_n$, we can see that we are essentially just returning the previous value of $j$ before it is updated, meaning $arr[i] = F_n = j$. Then, when we update $j$, we are increasing it by `tmp`, which is the difference between the current value of $j$ and the previous value of $arr[i]$.
 $$
-F_n = j 
-F_{n+1} = j_{nxt} 
-tmp = j - arr[i] 
-$$
-$$
-j_{nxt} = j + tmp 
-j_{nxt} = j + (j - arr[i]) 
-$$
-$$
-F_{n+1} = 2F_n - arr[i] 
+\begin{aligned}
+F_n &= j \\
+F_{n+1} &= j_{nxt} \\
+tmp &= j - arr[i] \\\\
+j_{nxt} &= j + tmp \\
+j_{nxt} &= j + (j - arr[i]) \\\\
+F_{n+1} &= 2F_n - arr[i] 
+\end{aligned}
 $$
 
 Finally, `arr[i]` is the value that was previously assigned when we were last in this position in `arr`. Looping through the entire buffer to reach the same spot again takes 32 iterations, so the previous value of `arr[i]` must be the 32th previous value in the sequence, or $F_{n-32}$.
