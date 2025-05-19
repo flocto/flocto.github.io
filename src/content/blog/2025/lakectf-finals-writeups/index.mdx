@@ -481,13 +481,13 @@ return arr[(i + 31) & 0x1f] # return F_n
 ```
 When calculating $F_n$, we can see that we are essentially just returning the previous value of $j$ before it is updated, meaning $arr[i] = F_n = j$. Then, when we update $j$, we are increasing it by `tmp`, which is the difference between the current value of $j$ and the previous value of $arr[i]$.
 $$
-F_n = j \\
-F_{n+1} = j_{nxt} \\
-tmp = j - arr[i] \\
+F_n = j 
+F_{n+1} = j_{nxt} 
+tmp = j - arr[i] 
 $$
 $$
-j_{nxt} = j + tmp \\
-j_{nxt} = j + (j - arr[i]) \\
+j_{nxt} = j + tmp 
+j_{nxt} = j + (j - arr[i]) 
 $$
 $$
 F_{n+1} = 2F_n - arr[i] 
@@ -962,10 +962,1351 @@ b'Hi. If you have been able to decrypt this text, you deserve the flag for this 
 >
 > Points: 500 | Solves: 0
 
-[main](../../static/2025/lakectf-finals-writeups/onevsall/main) | [program.bpf](../../static/2025/lakectf-finals-writeups/onevsall/program.bpf)
+[main](../../static/2025/lakectf-finals-writeups/onevsall/main) | [program.bpf](../../static/2025/lakectf-finals-writeups/onevsall/program.bpf) 
+
+```python title="chal.py" showLineNumbers=false
+#!/usr/bin/env -S python3 -u
+import subprocess
+
+with open("/tmp/moves.txt", "w") as f:
+    f.write("221\n")
+    while True:
+        move = input("Enter your move: ")
+        if move == 'EOF':
+            break
+        f.write(move + "\n")
+        print(move)
+
+result = subprocess.run(["stdbuf", "-i0", "-e0", "-o0", "/app/main"], capture_output=True, text=True)
+print(result.stdout)
+```
 
 Finally, the last unblooded rev. Although I didn't manage to solve this one during the CTF, I took a look at it afterward and manage to upsolve it first. 
 
 The main gimmick of the challenge was the fact that it was a compiled [Lean](https://lean-lang.org/) binary, which then had a BPF program interpreter that ran the provided BPF program. Both of these were non-standard and made it hard to get a good overview of the program.
 
-*To be finished.*
+The decompilation of the binary was really really bad to look at, since Lean has a lot of consistency checks that add bloat to the real program logic. Feel free to open it in your own decompiler to check yourself.
+
+Anyway, after a bit of digging around, we find the real `_lean_main` function. It uses some pre-initialized constants from `initialize_Main`, which I've put below.
+```c title="initialize_Main"
+int64_t* rax_365 = lean_mk_string_unchecked("program.bpf", 0xb, 0xb)
+program.bpf = rax_365
+lean_mark_persistent(rax_365)
+
+int64_t* rax_366 = lean_mk_string_unchecked("/tmp/moves.txt", 0xe, 0xe)
+_/tmp/moves.txt = rax_366
+lean_mark_persistent(rax_366)
+
+int64_t* rax_367 = lean_mk_string_unchecked("No moves found!", 0xf, 0xf)
+No moves found! = rax_367
+lean_mark_persistent(rax_367)
+
+int64_t* rax_368 = lean_alloc_small(0x18, 2)
+*rax_368 = -0xaffffffffffffff
+rax_368[1] = l_main___lambda__1___boxed
+rax_368[2].d = 1
+l_main___closed__4 = rax_368
+lean_mark_persistent(rax_368)
+
+int64_t* rax_369 = lean_mk_string_unchecked("Unsuccessful", 0xc, 0xc)
+Unsuccessful = rax_369
+lean_mark_persistent(rax_369)
+
+int64_t* rax_370 = lean_mk_string_unchecked("Successful run!", 0xf, 0xf)
+Successful run! = rax_370
+lean_mark_persistent(rax_370)
+
+int64_t* rax_371 = lean_mk_string_unchecked("flag.txt", 8, 8)
+flag.txt = rax_371
+lean_mark_persistent(rax_371)
+```
+Note: this code is really long, don't expand unless you want to see the whole thing, a lot of it is just error checks and reference counting.
+```c title="_lean_main" collapse={2-46,48-74,76-84,86-108,110-136,138-146,148-166,168-184,206-214,216-232,235-243,249-274,276-311,314-322,325-337,339-391}
+int64_t* c = l_IO_FS_readFile(program.bpf)
+
+if ((c.b & 1) == 0)
+    if (zx.d(*(c + 7)) != 0)
+        goto label_4fab8b
+    
+    goto label_4faad3
+
+if ((c u>> 1).d != 0)
+    label_4fab8b:
+    
+    if (*c != 1)
+        label_4fab92:
+        int32_t* rbx_2 = c[1]
+        int32_t* r14_2 = c[2]
+        
+        if ((r14_2.b & 1) == 0)
+            int32_t rax_17 = *r14_2
+            
+            if (rax_17 s> 0)
+                *r14_2 = rax_17 + 1
+            else if (rax_17 != 0)
+                lean_inc_ref_cold(r14_2)
+        
+        if ((rbx_2.b & 1) == 0)
+            int32_t rax_19 = *rbx_2
+            
+            if (rax_19 s> 0)
+                *rbx_2 = rax_19 + 1
+            else if (rax_19 != 0)
+                lean_inc_ref_cold(rbx_2)
+        
+        if ((c.b & 1) == 0)
+            int32_t rax_21 = *c
+            
+            if (rax_21 s>= 2)
+                *c = rax_21 - 1
+            else if (rax_21 != 0)
+                lean_dec_ref_cold(c)
+        
+        c = lean_alloc_small(0x18, 2)
+        *c = 0x102000000000001
+        c[1] = rbx_2
+        c[2] = r14_2
+else
+    label_4faad3:
+    int32_t* rbx_1 = c[1]
+    
+    if ((rbx_1.b & 1) == 0)
+        int32_t rax_4 = *rbx_1
+        
+        if (rax_4 s> 0)
+            *rbx_1 = rax_4 + 1
+        else if (rax_4 != 0)
+            lean_inc_ref_cold(rbx_1)
+    
+    int32_t* r14_1 = c[2]
+    
+    if ((r14_1.b & 1) == 0)
+        int32_t rax_6 = *r14_1
+        
+        if (rax_6 s> 0)
+            *r14_1 = rax_6 + 1
+        else if (rax_6 != 0)
+            lean_inc_ref_cold(r14_1)
+    
+    if ((c.b & 1) == 0)
+        int32_t rax_8 = *c
+        
+        if (rax_8 s>= 2)
+            *c = rax_8 - 1
+        else if (rax_8 != 0)
+            lean_dec_ref_cold(c)
+    
+    int32_t* rax_10 = l_String_splitAux___at_main___spec__2(rbx_1, 1, 1, 1)
+    
+    if ((rbx_1.b & 1) == 0)
+        int32_t rax_11 = *rbx_1
+        
+        if (rax_11 s>= 2)
+            *rbx_1 = rax_11 - 1
+        else if (rax_11 != 0)
+            lean_dec_ref_cold(rbx_1)
+    
+    c = l_IO_FS_readFile(_/tmp/moves.txt)
+    
+    if ((c.b & 1) == 0)
+        if (zx.d(*(c + 7)) == 0)
+            goto label_4fac24
+        
+        goto label_4fab74
+    
+    if ((c u>> 1).d != 0)
+        label_4fab74:
+        
+        if ((rax_10.b & 1) != 0)
+            goto label_4fab8b
+        
+        int32_t rax_15 = *rax_10
+        
+        if (rax_15 s>= 2)
+            *rax_10 = rax_15 - 1
+        else if (rax_15 != 0)
+            lean_dec_ref_cold(rax_10)
+        
+        goto label_4fab8b
+    
+    label_4fac24:
+    int32_t* r12_1 = c[1]
+    
+    if ((r12_1.b & 1) == 0)
+        int32_t rax_27 = *r12_1
+        
+        if (rax_27 s> 0)
+            *r12_1 = rax_27 + 1
+        else if (rax_27 != 0)
+            lean_inc_ref_cold(r12_1)
+    
+    int32_t* r15_1 = c[2]
+    
+    if ((r15_1.b & 1) == 0)
+        int32_t rax_29 = *r15_1
+        
+        if (rax_29 s> 0)
+            *r15_1 = rax_29 + 1
+        else if (rax_29 != 0)
+            lean_inc_ref_cold(r15_1)
+    
+    if ((c.b & 1) == 0)
+        int32_t rax_31 = *c
+        
+        if (rax_31 s>= 2)
+            *c = rax_31 - 1
+        else if (rax_31 != 0)
+            lean_dec_ref_cold(c)
+    
+    int32_t* rax_33 = l_String_splitAux___at_main___spec__2(r12_1, 1, 1, 1)
+    
+    if ((r12_1.b & 1) == 0)
+        int32_t rax_34 = *r12_1
+        
+        if (rax_34 s>= 2)
+            *r12_1 = rax_34 - 1
+        else if (rax_34 != 0)
+            lean_dec_ref_cold(r12_1)
+    
+    int32_t* rax_36 = l_List_mapTR_loop___at_main___spec__3(rax_33, 1)
+    
+    if ((rax_36.b & 1) == 0)
+        if (zx.d(*(rax_36 + 7)) == 0)
+            goto label_4fae91
+        
+        goto label_4faccb
+    
+    if ((rax_36 u>> 1).d != 0)
+        label_4faccb:
+        int32_t* r12_2 = *(rax_36 + 8)
+        
+        if ((r12_2.b & 1) == 0)
+            int32_t rax_38 = *r12_2
+            
+            if (rax_38 s> 0)
+                *r12_2 = rax_38 + 1
+            else if (rax_38 != 0)
+                lean_inc_ref_cold(r12_2)
+        
+        int32_t* r13 = *(rax_36 + 0x10)
+        
+        if ((r13.b & 1) == 0)
+            int32_t rax_40 = *r13
+            
+            if (rax_40 s> 0)
+                *r13 = rax_40 + 1
+            else if (rax_40 != 0)
+                lean_inc_ref_cold(r13)
+        
+        if ((rax_36.b & 1) == 0)
+            int32_t rax_42 = *rax_36
+            
+            if (rax_42 s>= 2)
+                *rax_36 = rax_42 - 1
+            else if (rax_42 != 0)
+                lean_dec_ref_cold(rax_36)
+        
+        int64_t* rax_44 = lean_alloc_small(0x20, 3)
+        *rax_44 = -0xaffffffffffffff
+        rax_44[1] = l_main___lambda__2___boxed
+        rax_44[2].d = 0x10002
+        rax_44[3] = r12_2
+        int64_t* rax_45 = lean_alloc_small(0x20, 3)
+        *rax_45 = -0xaffffffffffffff
+        rax_45[1] = l_main___lambda__3___boxed
+        rax_45[2].d = 0x10002
+        rax_45[3] = r13
+        uint64_t l_main___closed__4_1 = l_main___closed__4
+        int32_t* rbp_2 = lean_alloc_small(0x28, 4)
+        *rbp_2 = 0x4000000000001
+        *(rbp_2 + 8) = l_main___closed__4_1
+        *(rbp_2 + 0x10) = rax_44
+        *(rbp_2 + 0x18) = rax_45
+        *(rbp_2 + 0x20) = 1
+        int32_t* rax_47 = l_List_mapTR_loop___at_runEbpfFromList___spec__1(rax_10, 1)
+        int32_t* rax_48
+        int128_t zmm0_1
+        rax_48, zmm0_1 = l_runEbpfFromList_loop(rax_47, rbp_2)
+        
+        if ((rax_47.b & 1) == 0)
+            int32_t rax_49 = *rax_47
+            
+            if (rax_49 s>= 2)
+                *rax_47 = rax_49 - 1
+            else if (rax_49 != 0)
+                zmm0_1 = lean_dec_ref_cold(rax_47)
+        
+        int32_t* rbx_7 = *(rax_48 + 0x10)
+        
+        if ((rbx_7.b & 1) == 0)
+            int32_t rax_51 = *rbx_7
+            
+            if (rax_51 s> 0)
+                *rbx_7 = rax_51 + 1
+            else if (rax_51 != 0)
+                lean_inc_ref_cold(rbx_7)
+        
+        if ((rax_48.b & 1) == 0)
+            int32_t rax_53 = *rax_48
+            
+            if (rax_53 s>= 2)
+                *rax_48 = rax_53 - 1
+            else if (rax_53 != 0)
+                zmm0_1 = lean_dec_ref_cold(rax_48)
+        
+        int32_t* rax_55 = lean_apply_1(rbx_7, 0x3ff, zmm0_1)
+        int64_t rbx_8 = *(rax_55 + 8)
+        
+        if ((rax_55.b & 1) == 0)
+            int32_t rcx_1 = *rax_55
+            
+            if (rcx_1 s>= 2)
+                *rax_55 = rcx_1 - 1
+            else if (rcx_1 != 0)
+                lean_dec_ref_cold(rax_55)
+        
+        if (rbx_8 != 0x1337)
+            return l_IO_print___at_IO_println___spec__1(lean_string_push(Unsuccessful, 0xa))
+                __tailcall
+        
+        c = l_IO_print___at_IO_println___spec__1(lean_string_push(Successful run!, 0xa))
+        uint32_t rax_58
+        
+        if ((c.b & 1) != 0)
+            rax_58 = (c u>> 1).d
+        else
+            rax_58 = zx.d(*(c + 7))
+        
+        if (rax_58 == 0)
+            int32_t* rbx_9 = c[2]
+            
+            if ((rbx_9.b & 1) == 0)
+                int32_t rax_70 = *rbx_9
+                
+                if (rax_70 s> 0)
+                    *rbx_9 = rax_70 + 1
+                else if (rax_70 != 0)
+                    lean_inc_ref_cold(rbx_9)
+            
+            if ((c.b & 1) == 0)
+                int32_t rax_72 = *c
+                
+                if (rax_72 s>= 2)
+                    *c = rax_72 - 1
+                else if (rax_72 != 0)
+                    lean_dec_ref_cold(c)
+            
+            c = l_IO_FS_readFile(flag.txt)
+            uint32_t rax_75
+            
+            if ((c.b & 1) != 0)
+                rax_75 = (c u>> 1).d
+            else
+                rax_75 = zx.d(*(c + 7))
+            
+            if (rax_75 == 0)
+                int32_t* r15_3 = c[1]
+                
+                if ((r15_3.b & 1) == 0)
+                    int32_t rax_84 = *r15_3
+                    
+                    if (rax_84 s> 0)
+                        *r15_3 = rax_84 + 1
+                    else if (rax_84 != 0)
+                        lean_inc_ref_cold(r15_3)
+                
+                int32_t* r14_4 = c[2]
+                
+                if ((r14_4.b & 1) == 0)
+                    int32_t rax_86 = *r14_4
+                    
+                    if (rax_86 s> 0)
+                        *r14_4 = rax_86 + 1
+                    else if (rax_86 != 0)
+                        lean_inc_ref_cold(r14_4)
+                
+                if ((c.b & 1) == 0)
+                    int32_t rax_88 = *c
+                    
+                    if (rax_88 s>= 2)
+                        *c = rax_88 - 1
+                    else if (rax_88 != 0)
+                        lean_dec_ref_cold(c)
+                
+                int32_t* l_main___closed__8_1 = l_main___closed__8
+                int64_t* rax_90 = lean_string_append(l_main___closed__8_1, r15_3)
+                
+                if ((r15_3.b & 1) == 0)
+                    int32_t rax_91 = *r15_3
+                    
+                    if (rax_91 s>= 2)
+                        *r15_3 = rax_91 - 1
+                    else if (rax_91 != 0)
+                        lean_dec_ref_cold(r15_3)
+                
+                return l_IO_print___at_IO_println___spec__1(lean_string_push(
+                    lean_string_append(rax_90, l_main___closed__8_1), 0xa)) __tailcall
+        
+        goto label_4fab8b
+    
+    label_4fae91:
+    
+    if ((rax_10.b & 1) == 0)
+        int32_t rax_61 = *rax_10
+        
+        if (rax_61 s>= 2)
+            *rax_10 = rax_61 - 1
+        else if (rax_61 != 0)
+            lean_dec_ref_cold(rax_10)
+    
+    c = l_IO_print___at_IO_println___spec__1(lean_string_push(No moves found!, 0xa))
+    uint32_t rax_65
+    
+    if ((c.b & 1) != 0)
+        rax_65 = (c u>> 1).d
+    else
+        rax_65 = zx.d(*(c + 7))
+    
+    int32_t rcx_4 = *c
+    
+    if (rax_65 == 0)
+        if (rcx_4 != 1)
+            int32_t* rbx_10 = c[2]
+            
+            if ((rbx_10.b & 1) == 0)
+                int32_t rax_78 = *rbx_10
+                
+                if (rax_78 s> 0)
+                    *rbx_10 = rax_78 + 1
+                else if (rax_78 != 0)
+                    lean_inc_ref_cold(rbx_10)
+            
+            if ((c.b & 1) == 0)
+                int32_t rax_80 = *c
+                
+                if (rax_80 s>= 2)
+                    *c = rax_80 - 1
+                else if (rax_80 != 0)
+                    lean_dec_ref_cold(c)
+            
+            c = lean_alloc_small(0x18, 2)
+            *c = 0x2000000000001
+            c[1] = 1
+            c[2] = rbx_10
+        else
+            int32_t* rdi_17 = c[1]
+            
+            if ((rdi_17.b & 1) != 0)
+                c[1] = 1
+            else
+                int32_t rax_76 = *rdi_17
+                
+                if (rax_76 s< 2)
+                    if (rax_76 != 0)
+                        lean_dec_ref_cold(rdi_17)
+                    
+                    c[1] = 1
+                else
+                    *rdi_17 = rax_76 - 1
+                    c[1] = 1
+    else if (rcx_4 != 1)
+        goto label_4fab92
+
+return c
+```
+
+Essentially, the program reads in a EBPF program from `program.bpf` as well as a list of moves from `/tmp/moves.txt`. It then runs the EBPF program with the moves as input, and if the program returns `0x1337`, it print the flag.
+
+This means our goal is to figure out what the EBPF program does, and how to get it to return `0x1337`.
+
+Without going into too much detail, the `l_List_mapTR_loop___at_runEbpfFromList___spec__1` and `l_runEbpfFromList_loop` functions take in the list of integers from `program.bpf`, convert them from Lean's native natural number representation to a `uint64`, extract the EBPF program from the numbers, then finally executes it in a loop, continually interpreting the current EBPF instruction and executing it until the program terminates.
+
+### thanks gemini
+
+Unfortunately, if we try to convert the EBPF program ourselves and run standard disassembly tools on it, we immediately get an error. Instead of trying to chase down this rabbit hole, I instead had Gemini create a Python disassembly script for me:
+
+```python title="disasm.py" collapse={7-19,22-25,28-34,37-50,53-54,57-70,74-76,80-185}
+#!/usr/bin/env python3
+
+import struct
+from enum import Enum, auto
+
+class BPFClass(Enum):
+    LD = 0x00
+    LDX = 0x01
+    ST = 0x02
+    STX = 0x03
+    ALU = 0x04
+    JMP = 0x05
+    RET = 0x06
+    ALU64 = 0x07
+    # These are BPF_JMP32, BPF_ALU32 in more recent kernels
+    UNUSED1 = 0x08
+    UNUSED2 = 0x09
+    # BPF extensions
+    MISC = 0xF0
+
+class BPFSize(Enum):
+    W = 0x00  # 32-bit
+    H = 0x08  # 16-bit
+    B = 0x10  # 8-bit
+    DW = 0x18  # 64-bit
+
+class BPFMode(Enum):
+    IMM = 0x00
+    ABS = 0x20
+    IND = 0x40
+    MEM = 0x60
+    LEN = 0x80
+    MSH = 0xa0
+    XADD = 0xc0
+
+class BPFALU(Enum):
+    ADD = 0x00
+    SUB = 0x10
+    MUL = 0x20
+    DIV = 0x30
+    OR = 0x40
+    AND = 0x50
+    LSH = 0x60
+    RSH = 0x70
+    NEG = 0x80
+    MOD = 0x90
+    XOR = 0xa0
+    MOV = 0xb0
+    ARSH = 0xc0
+    END = 0xd0
+
+class BPFSource(Enum):
+    K = 0x00  # 32-bit immediate
+    X = 0x08  # Index register
+
+class BPFJump(Enum):
+    JA = 0x00
+    JEQ = 0x10
+    JGT = 0x20
+    JGE = 0x30
+    JSET = 0x40
+    JNE = 0x50
+    JSGT = 0x60
+    JSGE = 0x70
+    CALL = 0x80
+    EXIT = 0x90
+    JLT = 0xa0
+    JLE = 0xb0
+    JSLT = 0xc0
+    JSLE = 0xd0
+
+def format_immediate(imm):
+    """Format immediate value with ASCII representation if printable."""
+    if 32 <= imm <= 126:  # Printable ASCII range
+        return f"{imm} ('{chr(imm)}')"
+    return f"{imm}"
+
+def decode_instruction(i, instruction):
+    """Decode a BPF instruction from a 64-bit integer."""
+    # eBPF instruction format: 
+    # op:8, dst:4, src:4, off:16, imm:32
+    # Extract fields from the instruction
+    op = (instruction & 0xFF)
+    dst_reg = ((instruction >> 8) & 0xF)
+    src_reg = ((instruction >> 12) & 0xF)
+    offset = struct.unpack('h', struct.pack('H', (instruction >> 16) & 0xFFFF))[0]  # Signed 16-bit
+    imm = struct.unpack('i', struct.pack('I', (instruction >> 32) & 0xFFFFFFFF))[0]  # Signed 32-bit
+    
+    # Decode opcode
+    opcode = op & 0x07  # class
+    src_type = op & 0x08  # src
+    
+    # Extract instruction class
+    try:
+        bpf_class = BPFClass(opcode)
+    except ValueError:
+        return f"Unknown instruction class: {opcode:x}"
+    
+    # Decode instruction based on class
+    if bpf_class == BPFClass.ALU or bpf_class == BPFClass.ALU64:
+        alu_op = op & 0xf0
+        src_type = op & 0x08
+        try:
+            alu_operation = BPFALU(alu_op)
+            src_name = "X" if src_type else "K"
+            class_name = "ALU64" if bpf_class == BPFClass.ALU64 else "ALU"
+            
+            if alu_operation == BPFALU.NEG:
+                return f"{alu_operation.name} r{dst_reg}"
+            else:
+                if src_type:
+                    src_val = f"r{src_reg}"
+                else:
+                    src_val = format_immediate(imm)
+                return f"{alu_operation.name} r{dst_reg} {src_val}"
+        except ValueError:
+            return f"Unknown ALU operation: {alu_op:x}"
+    
+    elif bpf_class == BPFClass.JMP:
+        jmp_op = op & 0xf0
+        src_type = op & 0x08
+        try:
+            jump_operation = BPFJump(jmp_op)
+            if jump_operation == BPFJump.CALL:
+                return f"CALL {imm}"
+            elif jump_operation == BPFJump.EXIT:
+                return "EXIT"
+            elif jump_operation == BPFJump.JA:
+                return f"JA {offset} ({i + offset})"
+            else:
+                if src_type:
+                    src_val = f"r{src_reg}"
+                else:
+                    src_val = format_immediate(imm)
+                return f"{jump_operation.name} r{dst_reg}, {src_val}, {offset}"
+        except ValueError:
+            return f"Unknown jump operation: {jmp_op:x}"
+    
+    elif bpf_class == BPFClass.LD or bpf_class == BPFClass.LDX:
+        size = op & 0x18
+        mode = op & 0xe0
+        try:
+            size_name = BPFSize(size).name
+            mode_name = BPFMode(mode).name
+            class_name = "LD" if bpf_class == BPFClass.LD else "LDX"
+            
+            if mode == BPFMode.IMM.value:
+                # print(src_type, src_reg)
+                return f"LD {size_name}/IMM r{dst_reg}, r{src_reg}"
+            elif mode == BPFMode.MEM.value:
+                if bpf_class == BPFClass.LDX:
+                    src_desc = f"r{src_reg}"
+                else:
+                    src_desc = format_immediate(imm)
+                return f"{size_name}/MEM r{dst_reg}, [r{src_reg}{'+'+str(offset) if offset else ''}]"
+            else:
+                val = offset if offset else imm
+                return f"{size_name}/{mode_name} r{dst_reg}, {format_immediate(val)}"
+        except ValueError:
+            return f"Unknown LD/LDX mode or size: mode={mode:x}, size={size:x}"
+    
+    elif bpf_class == BPFClass.ST or bpf_class == BPFClass.STX:
+        size = op & 0x18
+        mode = op & 0xe0
+        try:
+            size_name = BPFSize(size).name
+            mode_name = BPFMode(mode).name
+            class_name = "ST" if bpf_class == BPFClass.ST else "STX"
+            
+            if mode == BPFMode.MEM.value:
+                if bpf_class == BPFClass.ST:
+                    value = format_immediate(imm)
+                else:
+                    value = f"r{src_reg}"
+                return f"{size_name}/MEM [r{dst_reg}{'+'+str(offset) if offset else ''}], {value}"
+            elif mode == BPFMode.XADD.value:
+                return f"XADD [r{dst_reg}{'+'+str(offset) if offset else ''}], r{src_reg}"
+            else:
+                val = offset if offset else imm
+                return f"ST {size_name}/{mode_name} [r{dst_reg}], {format_immediate(val)}"
+        except ValueError:
+            return f"Unknown ST/STX mode or size: mode={mode:x}, size={size:x}"
+    
+    else:
+        return f"Unhandled instruction class: {bpf_class.name}, op={op:x}, dst={dst_reg}, src={src_reg}, off={offset}, imm={imm}"
+
+def main():
+    with open('program.bpf', 'r') as f:
+        instructions = [int(line.strip()) for line in f.readlines() if line.strip()]
+    
+    print("Disassembled BPF program:")
+    print("-------------------------")
+    
+    for i, instr in enumerate(instructions):
+        decoded = decode_instruction(i, instr)
+        print(f"{i:4d}: {instr:16x} {decoded}")
+
+if __name__ == "__main__":
+    main()
+```
+
+If we run this with our given program, we get the following output
+```txt showLineNumbers=false collapse={3-143}
+Disassembled BPF program:
+-------------------------
+   0:       3000000004 ADD r0 48 ('0')
+   1:       3800001004 ADD r0 56 ('8')
+   2:       5000000002 ST W/IMM [r0], 80 ('P')
+   3:        100000004 ADD r0 1
+   4:         fffe015d JNE r1, r0, -2
+   5:       5200000002 ST W/IMM [r0], 82 ('R')
+   6:        100000004 ADD r0 1
+   7:       4b00000002 ST W/IMM [r0], 75 ('K')
+   8:        100000004 ADD r0 1
+   9:       4200000002 ST W/IMM [r0], 66 ('B')
+  10:        100000004 ADD r0 1
+  11:       5100000002 ST W/IMM [r0], 81 ('Q')
+  12:        100000004 ADD r0 1
+  13:       5700000002 ST W/IMM [r0], 87 ('W')
+  14:        100000004 ADD r0 1
+  15:       4200000002 ST W/IMM [r0], 66 ('B')
+  16:        100000004 ADD r0 1
+  17:       4b00000002 ST W/IMM [r0], 75 ('K')
+  18:        100000004 ADD r0 1
+  19:       5200000002 ST W/IMM [r0], 82 ('R')
+  20:              a01 LD W/IMM r10, r0
+  21:               15 JEQ r0, 0, 0
+  22:             10bc MOV r0 r1
+  23:       ff00001054 AND r0 255
+  24:        800000074 RSH r0 8
+  25:             20bc MOV r0 r2
+  26:       ff00002054 AND r0 255
+  27:        800000074 RSH r0 8
+  28:             30bc MOV r0 r3
+  29:       ff00003054 AND r0 255
+  30:        800000074 RSH r0 8
+  31:        100001014 SUB r0 1
+  32:       4100002014 SUB r0 65 ('A')
+  33:        800001024 MUL r0 8
+  34:             41bc MOV r1 r4
+  35:             420c ADD r2 r4
+  36:             50bc MOV r0 r5
+  37:       ff00005054 AND r0 255
+  38:        800000074 RSH r0 8
+  39:             60bc MOV r0 r6
+  40:       ff00006054 AND r0 255
+  41:        800000074 RSH r0 8
+  42:             70bc MOV r0 r7
+  43:       ff00007054 AND r0 255
+  44:        800000074 RSH r0 8
+  45:        100005014 SUB r0 1
+  46:       4100006014 SUB r0 65 ('A')
+  47:        800005024 MUL r0 8
+  48:             85bc MOV r5 r8
+  49:             860c ADD r6 r8
+  50:             375d JNE r7, r3, 0
+  51:              401 LD W/IMM r4, r0
+  52:              35d JNE r3, r0, 0
+  53:       5000083055 JNE r0, 80 ('P'), 8
+  54:             48bd JLE r8, r4, 0
+  55:             80a5 JLT r0, 0, 0
+  56:       4000008035 JGE r0, 64 ('@'), 0
+  57:              4bc MOV r4 r0
+  58:              81c SUB r8 r0
+  59:        800000055 JNE r0, 8, 0
+  60:           470005 JA 71 (131)
+  61:       5200043055 JNE r0, 82 ('R'), 4
+  62:            2151d JEQ r5, r1, 2
+  63:             265d JNE r6, r2, 0
+  64:           430005 JA 67 (131)
+  65:       4b00103055 JNE r0, 75 ('K'), 16
+  66:            215ad JLT r5, r1, 2
+  67:            3152d JGT r5, r1, 3
+  68:             511c SUB r1 r5
+  69:            30005 JA 3 (72)
+  70:             151c SUB r5 r1
+  71:             51bc MOV r1 r5
+  72:            3262d JGT r6, r2, 3
+  73:             621c SUB r2 r6
+  74:            30005 JA 3 (77)
+  75:             261c SUB r6 r2
+  76:             62bc MOV r2 r6
+  77:        200025055 JNE r0, 2, 2
+  78:        100006055 JNE r0, 1, 0
+  79:        200006055 JNE r0, 2, 0
+  80:           330005 JA 51 (131)
+  81:       4200103055 JNE r0, 66 ('B'), 16
+  82:             80a5 JLT r0, 0, 0
+  83:       4000008035 JGE r0, 64 ('@'), 0
+  84:            3152d JGT r5, r1, 3
+  85:             511c SUB r1 r5
+  86:            30005 JA 3 (89)
+  87:             151c SUB r5 r1
+  88:             51bc MOV r1 r5
+  89:        300005074 RSH r0 3
+  90:            3262d JGT r6, r2, 3
+  91:             621c SUB r2 r6
+  92:            30005 JA 3 (95)
+  93:             261c SUB r6 r2
+  94:             62bc MOV r2 r6
+  95:             565d JNE r6, r5, 0
+  96:           230005 JA 35 (131)
+  97:       5100123055 JNE r0, 81 ('Q'), 18
+  98:             80a5 JLT r0, 0, 0
+  99:       4000008035 JGE r0, 64 ('@'), 0
+ 100:            e151d JEQ r5, r1, 14
+ 101:            d261d JEQ r6, r2, 13
+ 102:            3152d JGT r5, r1, 3
+ 103:             511c SUB r1 r5
+ 104:            30005 JA 3 (107)
+ 105:             151c SUB r5 r1
+ 106:             51bc MOV r1 r5
+ 107:        300005074 RSH r0 3
+ 108:            3262d JGT r6, r2, 3
+ 109:             621c SUB r2 r6
+ 110:            30005 JA 3 (113)
+ 111:             261c SUB r6 r2
+ 112:             62bc MOV r2 r6
+ 113:             565d JNE r6, r5, 0
+ 114:           110005 JA 17 (131)
+ 115:       5700003055 JNE r0, 87 ('W'), 0
+ 116:             80a5 JLT r0, 0, 0
+ 117:       4000008035 JGE r0, 64 ('@'), 0
+ 118:            3152d JGT r5, r1, 3
+ 119:             511c SUB r1 r5
+ 120:            30005 JA 3 (123)
+ 121:             151c SUB r5 r1
+ 122:             51bc MOV r1 r5
+ 123:        300005074 RSH r0 3
+ 124:            3262d JGT r6, r2, 3
+ 125:             621c SUB r2 r6
+ 126:            30005 JA 3 (129)
+ 127:             261c SUB r6 r2
+ 128:             62bc MOV r2 r6
+ 129:             560c ADD r6 r5
+ 130:        100005055 JNE r0, 1, 0
+ 131:             1002 ST W/IMM [r0], 0
+ 132:              801 LD W/IMM r8, r0
+ 133:       5a00050015 JEQ r0, 90 ('Z'), 5
+ 134:             4002 ST W/IMM [r0], 0
+ 135:             8303 ST W/IMM [r3], 0
+ 136:        10000a004 ADD r0 1
+ 137:         ff8b0005 JA -117 (20)
+ 138:      1ff00009004 ADD r0 511
+ 139:     133700009002 ST W/IMM [r0], 4919
+```
+
+While it looks pretty reasonable, there a few bits that seem off.
+
+For example, the chunk 
+```txt
+  20:              a01 LD W/IMM r10, r0
+  21:               15 JEQ r0, 0, 0
+  22:             10bc MOV r0 r1
+  23:       ff00001054 AND r0 255
+  24:        800000074 RSH r0 8
+  25:             20bc MOV r0 r2
+  26:       ff00002054 AND r0 255
+  27:        800000074 RSH r0 8
+  28:             30bc MOV r0 r3
+  29:       ff00003054 AND r0 255
+  30:        800000074 RSH r0 8
+  31:        100001014 SUB r0 1
+  32:       4100002014 SUB r0 65 ('A')
+```
+Seems like it should be extracting the bytes of some given number that was loaded in, but it's moves values into `r0` from registers that weren't previously set. This is pretty odd behavior, and would make a lot more sense if it were the other way around.
+
+This part, along with some other parts, led me to believe that the source and destination registers were swapped in the program or interpreter itself. 
+
+With a bit of debugging and trial and error, I confirmed this to be the case, so with a quick edit to Gemini's output, we can finally disassemble the program correctly:
+```python title="disasm.py" startLineNumber=78 del={7-8} ins={9-10}
+def decode_instruction(i, instruction):
+    """Decode a BPF instruction from a 64-bit integer."""
+    # eBPF instruction format: 
+    # op:8, dst:4, src:4, off:16, imm:32
+    # Extract fields from the instruction
+    op = (instruction & 0xFF)
+    dst_reg = ((instruction >> 8) & 0xF)
+    src_reg = ((instruction >> 12) & 0xF)
+    src_reg = ((instruction >> 8) & 0xF)
+    dst_reg = ((instruction >> 12) & 0xF)
+    offset = struct.unpack('h', struct.pack('H', (instruction >> 16) & 0xFFFF))[0]  # Signed 16-bit
+    imm = struct.unpack('i', struct.pack('I', (instruction >> 32) & 0xFFFFFFFF))[0]  # Signed 32-bit
+```
+
+Here's the final correct ~~to the best of my knowledge~~ disassembly:
+```txt showLineNumbers=false collapse={3-143}
+Disassembled BPF program:
+-------------------------
+   0:       3000000004 ADD r0 48 ('0')
+   1:       3800001004 ADD r1 56 ('8')
+   2:       5000000002 ST W/IMM [r0], 80 ('P')
+   3:        100000004 ADD r0 1
+   4:         fffe015d JNE r0, r1, -2
+   5:       5200000002 ST W/IMM [r0], 82 ('R')
+   6:        100000004 ADD r0 1
+   7:       4b00000002 ST W/IMM [r0], 75 ('K')
+   8:        100000004 ADD r0 1
+   9:       4200000002 ST W/IMM [r0], 66 ('B')
+  10:        100000004 ADD r0 1
+  11:       5100000002 ST W/IMM [r0], 81 ('Q')
+  12:        100000004 ADD r0 1
+  13:       5700000002 ST W/IMM [r0], 87 ('W')
+  14:        100000004 ADD r0 1
+  15:       4200000002 ST W/IMM [r0], 66 ('B')
+  16:        100000004 ADD r0 1
+  17:       4b00000002 ST W/IMM [r0], 75 ('K')
+  18:        100000004 ADD r0 1
+  19:       5200000002 ST W/IMM [r0], 82 ('R')
+  20:              a01 LD W/IMM r0, r10
+  21:               15 JEQ r0, 0, 0
+  22:             10bc MOV r1 r0
+  23:       ff00001054 AND r1 255
+  24:        800000074 RSH r0 8
+  25:             20bc MOV r2 r0
+  26:       ff00002054 AND r2 255
+  27:        800000074 RSH r0 8
+  28:             30bc MOV r3 r0
+  29:       ff00003054 AND r3 255
+  30:        800000074 RSH r0 8
+  31:        100001014 SUB r1 1
+  32:       4100002014 SUB r2 65 ('A')
+  33:        800001024 MUL r1 8
+  34:             41bc MOV r4 r1
+  35:             420c ADD r4 r2
+  36:             50bc MOV r5 r0
+  37:       ff00005054 AND r5 255
+  38:        800000074 RSH r0 8
+  39:             60bc MOV r6 r0
+  40:       ff00006054 AND r6 255
+  41:        800000074 RSH r0 8
+  42:             70bc MOV r7 r0
+  43:       ff00007054 AND r7 255
+  44:        800000074 RSH r0 8
+  45:        100005014 SUB r5 1
+  46:       4100006014 SUB r6 65 ('A')
+  47:        800005024 MUL r5 8
+  48:             85bc MOV r8 r5
+  49:             860c ADD r8 r6
+  50:             375d JNE r3, r7, 0
+  51:              401 LD W/IMM r0, r4
+  52:              35d JNE r0, r3, 0
+  53:       5000083055 JNE r3, 80 ('P'), 8
+  54:             48bd JLE r4, r8, 0
+  55:             80a5 JLT r8, 0, 0
+  56:       4000008035 JGE r8, 64 ('@'), 0
+  57:              4bc MOV r0 r4
+  58:              81c SUB r0 r8
+  59:        800000055 JNE r0, 8, 0
+  60:           470005 JA 71 (131)
+  61:       5200043055 JNE r3, 82 ('R'), 4
+  62:            2151d JEQ r1, r5, 2
+  63:             265d JNE r2, r6, 0
+  64:           430005 JA 67 (131)
+  65:       4b00103055 JNE r3, 75 ('K'), 16
+  66:            215ad JLT r1, r5, 2
+  67:            3152d JGT r1, r5, 3
+  68:             511c SUB r5 r1
+  69:            30005 JA 3 (72)
+  70:             151c SUB r1 r5
+  71:             51bc MOV r5 r1
+  72:            3262d JGT r2, r6, 3
+  73:             621c SUB r6 r2
+  74:            30005 JA 3 (77)
+  75:             261c SUB r2 r6
+  76:             62bc MOV r6 r2
+  77:        200025055 JNE r5, 2, 2
+  78:        100006055 JNE r6, 1, 0
+  79:        200006055 JNE r6, 2, 0
+  80:           330005 JA 51 (131)
+  81:       4200103055 JNE r3, 66 ('B'), 16
+  82:             80a5 JLT r8, 0, 0
+  83:       4000008035 JGE r8, 64 ('@'), 0
+  84:            3152d JGT r1, r5, 3
+  85:             511c SUB r5 r1
+  86:            30005 JA 3 (89)
+  87:             151c SUB r1 r5
+  88:             51bc MOV r5 r1
+  89:        300005074 RSH r5 3
+  90:            3262d JGT r2, r6, 3
+  91:             621c SUB r6 r2
+  92:            30005 JA 3 (95)
+  93:             261c SUB r2 r6
+  94:             62bc MOV r6 r2
+  95:             565d JNE r5, r6, 0
+  96:           230005 JA 35 (131)
+  97:       5100123055 JNE r3, 81 ('Q'), 18
+  98:             80a5 JLT r8, 0, 0
+  99:       4000008035 JGE r8, 64 ('@'), 0
+ 100:            e151d JEQ r1, r5, 14
+ 101:            d261d JEQ r2, r6, 13
+ 102:            3152d JGT r1, r5, 3
+ 103:             511c SUB r5 r1
+ 104:            30005 JA 3 (107)
+ 105:             151c SUB r1 r5
+ 106:             51bc MOV r5 r1
+ 107:        300005074 RSH r5 3
+ 108:            3262d JGT r2, r6, 3
+ 109:             621c SUB r6 r2
+ 110:            30005 JA 3 (113)
+ 111:             261c SUB r2 r6
+ 112:             62bc MOV r6 r2
+ 113:             565d JNE r5, r6, 0
+ 114:           110005 JA 17 (131)
+ 115:       5700003055 JNE r3, 87 ('W'), 0
+ 116:             80a5 JLT r8, 0, 0
+ 117:       4000008035 JGE r8, 64 ('@'), 0
+ 118:            3152d JGT r1, r5, 3
+ 119:             511c SUB r5 r1
+ 120:            30005 JA 3 (123)
+ 121:             151c SUB r1 r5
+ 122:             51bc MOV r5 r1
+ 123:        300005074 RSH r5 3
+ 124:            3262d JGT r2, r6, 3
+ 125:             621c SUB r6 r2
+ 126:            30005 JA 3 (129)
+ 127:             261c SUB r2 r6
+ 128:             62bc MOV r6 r2
+ 129:             560c ADD r5 r6
+ 130:        100005055 JNE r5, 1, 0
+ 131:             1002 ST W/IMM [r1], 0
+ 132:              801 LD W/IMM r0, r8
+ 133:       5a00050015 JEQ r0, 90 ('Z'), 5
+ 134:             4002 ST W/IMM [r4], 0
+ 135:             8303 ST W/IMM [r8], 0
+ 136:        10000a004 ADD r10 1
+ 137:         ff8b0005 JA -117 (20)
+ 138:      1ff00009004 ADD r9 511
+ 139:     133700009002 ST W/IMM [r9], 4919
+```
+
+### ebpf chess fun
+If you haven't already guessed, this emulates a sort of chess program. We have `P` for the pawns, then `R`, `K`, `B`, `Q`, and `W` for the rooks, knights, bishops, queens, and kings respectively. 
+
+We can split up this program into a few seperate sections.
+
+First, the initial section sets up the board by placing a row of 8 pawns, then the back rank of what we can assume is our pieces. It places these spanning positions 48-63 in memory, which is 2 rows of 8 pieces.
+```txt showLineNumbers=false {"pawn loop":1-5} {"back rank":7-21}
+
+   0:       3000000004 ADD r0 48 ('0')
+   1:       3800001004 ADD r1 56 ('8')
+   2:       5000000002 ST W/IMM [r0], 80 ('P')
+   3:        100000004 ADD r0 1
+   4:         fffe015d JNE r0, r1, -2
+
+   5:       5200000002 ST W/IMM [r0], 82 ('R')
+   6:        100000004 ADD r0 1
+   7:       4b00000002 ST W/IMM [r0], 75 ('K')
+   8:        100000004 ADD r0 1
+   9:       4200000002 ST W/IMM [r0], 66 ('B')
+  10:        100000004 ADD r0 1
+  11:       5100000002 ST W/IMM [r0], 81 ('Q')
+  12:        100000004 ADD r0 1
+  13:       5700000002 ST W/IMM [r0], 87 ('W')
+  14:        100000004 ADD r0 1
+  15:       4200000002 ST W/IMM [r0], 66 ('B')
+  16:        100000004 ADD r0 1
+  17:       4b00000002 ST W/IMM [r0], 75 ('K')
+  18:        100000004 ADD r0 1
+  19:       5200000002 ST W/IMM [r0], 82 ('R')
+```
+
+Next, we have a section that loads in a number from `r10`, exits if its 0, otherwise breaks it up byte by byte into `r1` through `r7`, with each register storing a different part of the number.
+
+A look back at the binary shows that loading from `r10` actually loads from the list of integers passed in from `/tmp/moves.txt`, so this is the part that parses the move input into the actual moves.
+
+```txt showLineNumbers=false {"extract start pos":4-10} {"extract piece": 12-14} {"position calculation": 16-20} {"extract end pos":22-28} {"extract piece": 30-32} {"position calculation": 34-38}
+  20:              a01 LD W/IMM r0, r10
+  21:               15 JEQ r0, 0, 0
+
+  22:             10bc MOV r1 r0
+  23:       ff00001054 AND r1 255
+  24:        800000074 RSH r0 8
+
+  25:             20bc MOV r2 r0
+  26:       ff00002054 AND r2 255
+  27:        800000074 RSH r0 8
+
+  28:             30bc MOV r3 r0
+  29:       ff00003054 AND r3 255
+  30:        800000074 RSH r0 8
+
+  31:        100001014 SUB r1 1
+  32:       4100002014 SUB r2 65 ('A')
+  33:        800001024 MUL r1 8
+  34:             41bc MOV r4 r1
+  35:             420c ADD r4 r2
+
+  36:             50bc MOV r5 r0
+  37:       ff00005054 AND r5 255
+  38:        800000074 RSH r0 8
+
+  39:             60bc MOV r6 r0
+  40:       ff00006054 AND r6 255
+  41:        800000074 RSH r0 8
+
+  42:             70bc MOV r7 r0
+  43:       ff00007054 AND r7 255
+  44:        800000074 RSH r0 8
+
+  45:        100005014 SUB r5 1
+  46:       4100006014 SUB r6 65 ('A')
+  47:        800005024 MUL r5 8
+  48:             85bc MOV r8 r5
+  49:             860c ADD r8 r6
+
+  50:             375d JNE r3, r7, 0
+```
+
+A move consists of 6 bytes, the first 2 denoting the start position, the 3rd and last being the piece that is to be moved, and the 4th and 5th being the end position. 
+
+The positions are encoded with the first byte being the rank, and the second being the file, which is represented by the first byte being subtracted by 1, then multiplied by 8, and the second byte being subtracted by `A`. These are then added together to get the final position in memory.
+
+Next, the program loads in the piece currently stored at the position on the board, then checks that it is equal to the provided piece in the move. After this, there are move checks for the various pieces to ensure they follow their normal movement patterns, which is done in a `if-else` like fashion, with comparisons for each piece having its own block.
+
+```txt {"pawn move check": 4-11} {"rook move check": 13-16} {"knight move check": 18-33} {"bishop move check": 35-50} {"queen move check": 52-69} {"king move check": 71-86} collapse={5-11,14-16, 19-33, 36-50, 53-69, 72-86}
+  51:              401 LD W/IMM r0, r4
+  52:              35d JNE r0, r3, 0
+
+  53:       5000083055 JNE r3, 80 ('P'), 8
+  54:             48bd JLE r4, r8, 0
+  55:             80a5 JLT r8, 0, 0
+  56:       4000008035 JGE r8, 64 ('@'), 0
+  57:              4bc MOV r0 r4
+  58:              81c SUB r0 r8
+  59:        800000055 JNE r0, 8, 0
+  60:           470005 JA 71 (131)
+
+  61:       5200043055 JNE r3, 82 ('R'), 4
+  62:            2151d JEQ r1, r5, 2
+  63:             265d JNE r2, r6, 0
+  64:           430005 JA 67 (131)
+
+  65:       4b00103055 JNE r3, 75 ('K'), 16
+  66:            215ad JLT r1, r5, 2
+  67:            3152d JGT r1, r5, 3
+  68:             511c SUB r5 r1
+  69:            30005 JA 3 (72)
+  70:             151c SUB r1 r5
+  71:             51bc MOV r5 r1
+  72:            3262d JGT r2, r6, 3
+  73:             621c SUB r6 r2
+  74:            30005 JA 3 (77)
+  75:             261c SUB r2 r6
+  76:             62bc MOV r6 r2
+  77:        200025055 JNE r5, 2, 2
+  78:        100006055 JNE r6, 1, 0
+  79:        200006055 JNE r6, 2, 0
+  80:           330005 JA 51 (131)
+
+  81:       4200103055 JNE r3, 66 ('B'), 16
+  82:             80a5 JLT r8, 0, 0
+  83:       4000008035 JGE r8, 64 ('@'), 0
+  84:            3152d JGT r1, r5, 3
+  85:             511c SUB r5 r1
+  86:            30005 JA 3 (89)
+  87:             151c SUB r1 r5
+  88:             51bc MOV r5 r1
+  89:        300005074 RSH r5 3
+  90:            3262d JGT r2, r6, 3
+  91:             621c SUB r6 r2
+  92:            30005 JA 3 (95)
+  93:             261c SUB r2 r6
+  94:             62bc MOV r6 r2
+  95:             565d JNE r5, r6, 0
+  96:           230005 JA 35 (131)
+
+  97:       5100123055 JNE r3, 81 ('Q'), 18
+  98:             80a5 JLT r8, 0, 0
+  99:       4000008035 JGE r8, 64 ('@'), 0
+ 100:            e151d JEQ r1, r5, 14
+ 101:            d261d JEQ r2, r6, 13
+ 102:            3152d JGT r1, r5, 3
+ 103:             511c SUB r5 r1
+ 104:            30005 JA 3 (107)
+ 105:             151c SUB r1 r5
+ 106:             51bc MOV r5 r1
+ 107:        300005074 RSH r5 3
+ 108:            3262d JGT r2, r6, 3
+ 109:             621c SUB r6 r2
+ 110:            30005 JA 3 (113)
+ 111:             261c SUB r2 r6
+ 112:             62bc MOV r6 r2
+ 113:             565d JNE r5, r6, 0
+ 114:           110005 JA 17 (131)
+
+ 115:       5700003055 JNE r3, 87 ('W'), 0
+ 116:             80a5 JLT r8, 0, 0
+ 117:       4000008035 JGE r8, 64 ('@'), 0
+ 118:            3152d JGT r1, r5, 3
+ 119:             511c SUB r5 r1
+ 120:            30005 JA 3 (123)
+ 121:             151c SUB r1 r5
+ 122:             51bc MOV r5 r1
+ 123:        300005074 RSH r5 3
+ 124:            3262d JGT r2, r6, 3
+ 125:             621c SUB r6 r2
+ 126:            30005 JA 3 (129)
+ 127:             261c SUB r2 r6
+ 128:             62bc MOV r6 r2
+ 129:             560c ADD r5 r6
+ 130:        100005055 JNE r5, 1, 0
+```
+
+Notice that all the move checks besides the rook `R` and knight `K` check have this clause:
+```txt showLineNumbers=false
+             80a5 JLT r8, 0, 0
+       4000008035 JGE r8, 64 ('@'), 0
+```
+
+This is a check to ensure that the end position is within the bounds of the board. The rook and knight checks don't have this, so they have the ability to move off the board, which will be useful later.
+
+Finally, if the move was valid, the program will check if the end position currently stores a 0x5a, or `Z`. If this is the case, the program will store `0x1337` at position `511` in memory, which is eventually what is returned. Otherwise, it will set the end position to the piece being moved, set the start position to 0, then loop back to check the next move.
+```txt showLineNumbers=false {"win condition":2-3}
+ 131:             1002 ST W/IMM [r1], 0
+ 132:              801 LD W/IMM r0, r8
+ 133:       5a00050015 JEQ r0, 90 ('Z'), 5
+ 134:             4002 ST W/IMM [r4], 0
+ 135:             8303 ST W/IMM [r8], 0
+ 136:        10000a004 ADD r10 1
+ 137:         ff8b0005 JA -117 (20)
+ 138:      1ff00009004 ADD r9 511
+ 139:     133700009002 ST W/IMM [r9], 4919
+```
+
+### wheres the z???
+
+Given the last part of the program, we can see that our goal is somehow to move a piece onto a `Z`. However, there is no part of the program that actually writes a `Z` anywhere, so how could we possibly move on a `Z`?
+
+Going back to the binary, I did a quick search for `0x5a` and found an interesting function:
+```c collapse={9-16,20-29}
+int64_t* l_main___lambda__2___boxed(int32_t* arg1, int32_t* arg2)
+
+    uint64_t rbx_1 = zx.q(arg1.d) & 1
+    uint64_t r14
+    
+    if ((rbx_1.d & arg2.d) == 0)
+        r14 = zx.q(lean_nat_big_eq(arg2, arg1))
+        
+        if ((arg2.b & 1) == 0)
+            label_4fb317:
+            int32_t rax_1 = *arg2
+            
+            if (rax_1 s>= 2)
+                *arg2 = rax_1 - 1
+            else if (rax_1 != 0)
+                lean_dec_ref_cold(arg2)
+    else
+        r14.b = arg2 == arg1
+        
+        if ((arg2.b & 1) == 0)
+            goto label_4fb317
+    
+    if (rbx_1 == 0)
+        int32_t rax_3 = *arg1
+        
+        if (rax_3 s>= 2)
+            *arg1 = rax_3 - 1
+        else if (rax_3 != 0)
+            lean_dec_ref_cold(arg1)
+    
+    int64_t rbx_2 = 0x5a
+    
+    if (r14.b == 0)
+        rbx_2 = 0
+    
+    int64_t* result = lean_alloc_small(0x10, 1)
+    *result = 1
+    result[1] = rbx_2
+    return result
+```
+In one of the lambdas that gets applied to the list of moves, we have some equality check that if true, will cause `0x5a` to be returned instead of `0`.
+
+With some debugging, I found that the two values that were being compared against were the `221` that was  written to `/tmp/moves.txt` at the start of `/chal.py`, as well as the end position for every move in `/tmp/moves.txt`.
+
+```ansi {"end position":8} {"z position":19} {"compare positions": 35}
+[ Legend: [31m[1mModified register[m | [31mCode[39m | [94mHeap[39m | [35mStack[39m | [32mWritable[39m | [38;5;231mReadOnly[39m | [90mNone[39m | [4mRWX[0m | [33mString[39m ]
+[36m---- registers ----
+[31m[1m$rax   [m: [38;5;231m0x000055555557e600[39m  ->  0x0045474c004543fa
+[31m[1m$rbx   [m: 0x0000000000000001
+[31m[1m$rcx   [m: [31m0x00005555559d2d4c[39m <lean_apply_1+0x40c>  ->  0x01c7f640187f8b49
+[31m[1m$rdx   [m: 0x0000000000000050
+[31m[1m$rsp   [m: [35m0x00007fffffffbb30[39m  ->  0x0000000000000001
+[31m[1m$rbp   [m: 0x0000000000000001
+[31m[1m$rsi   [m: 0x0000000000000001
+[31m[1m$rdi   [m: 0x00000000000001bb
+[31m[1m$rip   [m: [31m0x000055555564f30a[39m <l_main___lambda__2___boxed+0x1a>  ->  0x40c6940f41fd394c
+[31m[1m$r8    [m: 0x0000000000000030
+[31m[1m$r9    [m: 0x0000000000000000
+[31m[1m$r10   [m: [32m0x00007ffff78c0b78[39m  ->  [32m0x00007ffff78c0b68[39m  ->  [32m0x00007ffff78c0b58[39m  ->  [32m0x00007ffff78c0b48[39m  ->  ...
+[31m[1m$r11   [m: 0x0000000000000001
+[31m[1m$r12   [m: [32m0x00007ffff78c0b78[39m  ->  [32m0x00007ffff78c0b68[39m  ->  [32m0x00007ffff78c0b58[39m  ->  [32m0x00007ffff78c0b48[39m  ->  ...
+[31m[1m$r13   [m: 0x0000000000000001
+[31m[1m$r14   [m: 0x0000000000000001
+[31m[1m$r15   [m: 0x00000000000001bb
+[31m[1m$eflags[m: 0x202 [ident align vx86 resume nested overflow direction [1mINTERRUPT[m trap sign zero adjust parity carry] [Ring=3]
+[31m[1m$cs[m: 0x33 [31m[1m$ss[m: 0x2b [31m[1m$ds[m: 0x00 [31m[1m$es[m: 0x00 [31m[1m$fs[m: 0x00 [31m[1m$gs[m: 0x00 
+[36m---- stack ----
+[23;1H[39m$rsp  [36m0x7fffffffbb30[39m|+0x0000|+000: 0x0000000000000001
+      [36m0x7fffffffbb38[39m|+0x0008|+001: 0x0000000000000008
+      [36m0x7fffffffbb40[39m|+0x0010|+002: 0x0000000000000001
+      [36m0x7fffffffbb48[39m|+0x0018|+003: [32m0x00007ffff78e3138[39m  ->  0xf500000000000002
+      [36m0x7fffffffbb50[39m|+0x0020|+004: [35m0x00007fffffffbb90[39m  ->  [35m0x00007fffffffbbd0[39m  ->  [35m0x00007fffffffbc10[39m  ->  ...
+      [36m0x7fffffffbb58[39m|+0x0028|+005: [31m0x00005555559d2d6b[39m <lean_apply_1+0x42b>  ->  0xf883078b41c38948[34m[1m  <-  retaddr[1]
+[m      [36m0x7fffffffbb60[39m|+0x0030|+006: 0x0000000000000002
+      [36m0x7fffffffbb68[39m|+0x0038|+007: 0x0000000000000008
+[36m---- code:x86:64 ----
+[32;1H[39m    [90m0x55555564f303 83e301              <l_main___lambda__2___boxed+0x13>   and    ebx, 0x1 
+[39m    [90m0x55555564f306 85eb                <l_main___lambda__2___boxed+0x16>   test   ebx, ebp 
+[39m    [90m0x55555564f308 745f                <l_main___lambda__2___boxed+0x18>   je     0x55555564f369 <l_main___lambda__2___boxed+0x79> 
+[31m*[39m-> [32m[1m0x55555564f30a[m [38;5;231m[1m4c39fd          [m    <l_main___lambda__2___boxed+0x1a>   [93m[1mcmp   [m [36m[1mrbp[38;5;231m, [36mr15[m 
+    0x55555564f30d [38;5;231m410f94c6        [39m    <l_main___lambda__2___boxed+0x1d>   [33msete  [39m [36mr14b[39m 
+    0x55555564f311 [38;5;231m40f6c501        [39m    <l_main___lambda__2___boxed+0x21>   [33mtest  [39m [36mbpl[38;5;231m, [94m0x1[39m 
+    0x55555564f315 [38;5;231m750d            [39m    <l_main___lambda__2___boxed+0x25>   [93m[1mjne   [m [94m0x55555564f324[39m <l_main___lambda__2___boxed+0x34> 
+    0x55555564f317 [38;5;231m8b4500          [39m    <l_main___lambda__2___boxed+0x27>   [33mmov   [39m [36meax[38;5;231m, [36mDWORD[39m [36mPTR[39m [38;5;231m[[36mrbp[39m [38;5;231m+[39m [94m0x0[m[1;53r[1;1H[3S[36;108H[38;5;231m][39m 
+    0x55555564f31a [38;5;231m83f802          [39m    <l_main___lambda__2___boxed+0x2a>   [33mcmp   [39m [36meax[38;5;231m, [94m0x2[39m 
+[36m---- threads ----
+[39;1H[39m[[32m[1mThread Id:1, tid:118598[m] Name: "main", [31m[1mstopped[m at [31m0x55555564f30a[39m <l_main___lambda__2___boxed+0x1a>, reason: [35m[1mBREAKPOINT
+[m[[35m[1mThread Id:2, tid:118601[m] Name: "main", [31m[1mstopped[m at [31m0x7ffff7da0b68[39m <epoll_pwait+0x78>, reason: [35m[1mBREAKPOINT
+[m[36m---- trace ----
+[42;1H[39m-> [[32m[1m#0[m] [31m0x55555564f30a[39m <l_main___lambda__2___boxed+0x1a>
+   [[35m[1m#1[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#2[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#3[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#4[m] [31m0x5555559d2e24[39m <lean_apply_1+0x4e4>
+   [[35m[1m#5[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#6[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#7[m] [31m0x5555559d2e24[39m <lean_apply_1+0x4e4>
+   [[35m[1m#8[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+   [[35m[1m#9[m] [31m0x5555559d2d6b[39m <lean_apply_1+0x42b>
+[36m-----------------------
+[53;1H[32m[1mgef>
+```
+
+This means the `Z` only actually ever gets written (returned) if there is a move whose end position is equal to that memory address, as that lambda is checking equality on the value of the end position and the `Z` intended position.
+
+In this case, the intended position of the `Z` is 221. Since this is not within the bounds of the board, we need to either use the rook or knight to move onto this space.
+
+The reason gdb shows a value of `0x1bb` is because of how Lean encodes natural numbers, where it uses the bottom-most bit to denote if the number is a pointer, as Lean supports arbitrary precision integers. Thus, `0x1bb`, which is equal to 443, is actually the value (443 - 1) / 2 = 221. You can see this in the `l_main___lambda__2___boxed` function as well, where it checks the bottom-most bit to determine if it should perform a simple `==` check or call a function to check equality.
+
+### putting it together
+
+Now since we know where the `Z` is supposed to be, we can simply have any rook move there in 2 moves. The rooks start at `A8` or `H8`, so I simply chose the `A8` one for convenience.
+
+```python title="solve.py"
+k = 221
+with open("/tmp/moves.txt", "w") as f:
+    f.write(f"{k}\n")
+
+    row = (k // 8) + 1
+    col = (k % 8) + 65
+
+    moves = [
+        # b'\x08AR\x1bAR',
+        # b'\x1bAR\x1bNR',
+
+        # move from A8 to A<row>
+        b'\x08AR' + bytes([row]) + b'AR',
+        # move from A<row> to <col><row>
+        bytes([row]) + b'AR' + bytes([row, col]) + b'R',
+    ]
+    for move in moves:
+        move = int.from_bytes(move, byteorder='little')
+        f.write(f"{move}\n")
+
+from pwn import process
+r = process("./main")
+r.interactive()
+```
+
+Since I didn't manage the solve this during the original CTF, I don't have the flag (or any remote interaction). However, running the script will show that the run was successful.
+
+```shell
+$ python3 chal.py 
+[+] Starting local process './main': pid 136290
+[*] Switching to interactive mode
+Successful run!
+flag{testing_flag}
+[*] Got EOF while reading in interactive
+$ 
+[*] Interrupted
+[*] Process './main' stopped with exit code 0 (pid 136290)
+```
+
