@@ -14,6 +14,7 @@ export const SITE: Site = {
 export const NAV_LINKS: SocialLink[] = [
   { href: '/blog', label: 'blog' },
   { href: '/about', label: 'about' },
+  { href: '/tools', label: 'tools' },
   { href: '/tags', label: 'tags' },
 ]
 

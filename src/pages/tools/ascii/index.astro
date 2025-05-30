@@ -1,0 +1,1057 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Layout from '@/layouts/Layout.astro'
+---
+
+<Layout>
+  <PageHead slot="head" title="ASCII Converter" />
+  <Breadcrumbs items={[
+    { label: 'Tools', href: '/tools', icon: 'lucide:wrench' },
+    { label: 'ASCII Converter', icon: 'lucide:type' }
+  ]} />
+
+  <div class="flex flex-col gap-6">
+    <!-- Converter Section -->
+    <Card>
+      <CardHeader>
+        <CardTitle>ASCII, Hex, Binary, Decimal Converter</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <!-- Settings Section -->
+        <div class="p-2 bg-muted/20 rounded-md space-y-3">
+          <h3 class="text-sm font-semibold">Settings</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="space-y-2">
+              <label class="text-xs font-medium text-muted-foreground">Delimiter</label>
+              <select id="delimiter-select" class="w-full p-2 text-sm border border-border rounded bg-background">
+                <option value="space">Space</option>
+                <option value="none">None</option>
+                <option value="comma">Comma</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div id="custom-delimiter-box" class="space-y-2 hidden">
+              <label class="text-xs font-medium text-muted-foreground">Custom Delimiter</label>
+              <input
+                id="custom-delimiter"
+                type="text"
+                placeholder="Custom delimiter"
+                class="w-full p-2 text-sm border border-border rounded bg-background"
+                maxlength="8"
+              />
+            </div>
+            <div class="space-y-2">
+              <label class="text-xs font-medium text-muted-foreground">0x/0b  Prefix</label>
+              <button
+                id="prefix-toggle"
+                class="w-full px-3 py-2 text-sm border border-border rounded bg-background hover:bg-muted transition-colors text-left"
+                data-prefix="false"
+              >
+                No Prefix
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <p><label for="ascii-input" class="text-sm font-medium">ASCII Text</label></p>
+            <div class="relative">
+              <textarea
+                id="ascii-input"
+                placeholder="Enter ASCII text..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="ascii-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <p><label for="hex-input" class="text-sm font-medium">Hex (bytes)</label></p>
+            <div class="relative">
+              <textarea
+                id="hex-input"
+                placeholder="Enter hex values..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="hex-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <p><label for="binary-input" class="text-sm font-medium">Binary (bytes)</label></p>
+            <div class="relative">
+              <textarea
+                id="binary-input"
+                placeholder="Enter binary values..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="binary-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <p><label for="decimal-input" class="text-sm font-medium">Decimal (bytes)</label></p>
+            <div class="relative">
+              <textarea
+                id="decimal-input"
+                placeholder="Enter decimal values..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="decimal-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p><label for="base64-input" class="text-sm font-medium">Base64</label></p>
+            <div class="relative">
+              <textarea
+                id="base64-input"
+                placeholder="Enter Base64 value..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="base64-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label for="integer-input" class="text-sm font-medium">Integer</label>
+              <button
+                id="endian-toggle"
+                class="px-2 py-1 text-xs border border-border rounded bg-background hover:bg-muted transition-colors"
+                data-endian="big"
+              >
+                Big Endian
+              </button>
+            </div>
+            <div class="relative">
+              <textarea
+                id="integer-input"
+                placeholder="Enter integer value..."
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                rows="3"
+              ></textarea>
+              <button
+                class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                data-target="integer-input"
+                title="Copy to clipboard"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Transformations Section -->
+    <Card>
+      <CardHeader>
+        <CardTitle>Text Transformations</CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <div class="py-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Transformation</label>
+            <select id="transform-select" class="w-full p-2 text-sm border border-border rounded bg-background">
+              <option value="">Select transformation...</option>
+              <option value="caesar">Caesar Cipher</option>
+              <option value="rot13">ROT13</option>
+              <option value="rot47">ROT47</option>
+              <option value="xor">XOR</option>
+              <option value="reverse">Reverse</option>
+              <option value="uppercase">Uppercase</option>
+              <option value="lowercase">Lowercase</option>
+            </select>
+          </div>
+          
+          <div id="transform-args" class="space-y-2 hidden">
+            <label id="transform-arg-label" class="text-sm font-medium">Argument</label>
+            <input
+              id="transform-arg-input"
+              type="text"
+              class="w-full p-2 text-sm border border-border rounded bg-background"
+              placeholder="Enter value..."
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button
+            id="apply-transform"
+            class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            Apply Transformation
+          </button>
+          <button
+            id="reset-ascii"
+            class="px-4 py-2 text-sm border border-border rounded bg-background hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            Reset
+          </button>
+        </div>
+
+        <div id="transform-result" class="space-y-2 hidden">
+          <label class="text-sm font-medium">Result</label>
+          <div class="relative">
+            <textarea
+              id="transform-output"
+              readonly
+              class="w-full p-3 pr-12 border border-border rounded-md bg-muted/50 text-foreground resize-none"
+              rows="3"
+            ></textarea>
+            <button
+              class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              data-target="transform-output"
+              title="Copy to clipboard"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- ASCII Table Section -->
+    <Card>
+      <CardHeader>
+        <CardTitle>ASCII Reference Table</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border">
+                <th class="text-right p-1 font-medium">Char</th>
+                <th class="text-right p-1 font-medium">Hex</th>
+                <th class="text-right p-1 font-medium">Bin</th>
+                <th class="text-right p-1 font-medium">Dec</th>
+                <th class="text-right p-1 font-medium">Char</th>
+                <th class="text-right p-1 font-medium">Hex</th>
+                <th class="text-right p-1 font-medium">Bin</th>
+                <th class="text-right p-1 font-medium">Dec</th>
+                <th class="text-right p-1 font-medium">Char</th>
+                <th class="text-right p-1 font-medium">Hex</th>
+                <th class="text-right p-1 font-medium">Bin</th>
+                <th class="text-right p-1 font-medium">Dec</th>
+                <th class="text-right p-1 font-medium">Char</th>
+                <th class="text-right p-1 font-medium">Hex</th>
+                <th class="text-right p-1 font-medium">Bin</th>
+                <th class="text-right p-1 font-medium">Dec</th>
+              </tr>
+            </thead>
+            <tbody id="ascii-table" class="text-xs">
+              <!-- Row 0-31 -->
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">NUL</td><td class="p-1 font-mono text-right">00</td><td class="p-1 font-mono text-right">00000000</td><td class="p-1 font-mono text-right">0</td>
+                <td class="p-1 font-mono text-additive text-right">Space</td><td class="p-1 font-mono text-right">20</td><td class="p-1 font-mono text-right">00100000</td><td class="p-1 font-mono text-right">32</td>
+                <td class="p-1 font-mono text-additive text-right">@</td><td class="p-1 font-mono text-right">40</td><td class="p-1 font-mono text-right">01000000</td><td class="p-1 font-mono text-right">64</td>
+                <td class="p-1 font-mono text-additive text-right">`</td><td class="p-1 font-mono text-right">60</td><td class="p-1 font-mono text-right">01100000</td><td class="p-1 font-mono text-right">96</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">SOH</td><td class="p-1 font-mono text-right">01</td><td class="p-1 font-mono text-right">00000001</td><td class="p-1 font-mono text-right">1</td>
+                <td class="p-1 font-mono text-additive text-right">!</td><td class="p-1 font-mono text-right">21</td><td class="p-1 font-mono text-right">00100001</td><td class="p-1 font-mono text-right">33</td>
+                <td class="p-1 font-mono text-additive text-right">A</td><td class="p-1 font-mono text-right">41</td><td class="p-1 font-mono text-right">01000001</td><td class="p-1 font-mono text-right">65</td>
+                <td class="p-1 font-mono text-additive text-right">a</td><td class="p-1 font-mono text-right">61</td><td class="p-1 font-mono text-right">01100001</td><td class="p-1 font-mono text-right">97</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">STX</td><td class="p-1 font-mono text-right">02</td><td class="p-1 font-mono text-right">00000010</td><td class="p-1 font-mono text-right">2</td>
+                <td class="p-1 font-mono text-additive text-right">"</td><td class="p-1 font-mono text-right">22</td><td class="p-1 font-mono text-right">00100010</td><td class="p-1 font-mono text-right">34</td>
+                <td class="p-1 font-mono text-additive text-right">B</td><td class="p-1 font-mono text-right">42</td><td class="p-1 font-mono text-right">01000010</td><td class="p-1 font-mono text-right">66</td>
+                <td class="p-1 font-mono text-additive text-right">b</td><td class="p-1 font-mono text-right">62</td><td class="p-1 font-mono text-right">01100010</td><td class="p-1 font-mono text-right">98</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">ETX</td><td class="p-1 font-mono text-right">03</td><td class="p-1 font-mono text-right">00000011</td><td class="p-1 font-mono text-right">3</td>
+                <td class="p-1 font-mono text-additive text-right">#</td><td class="p-1 font-mono text-right">23</td><td class="p-1 font-mono text-right">00100011</td><td class="p-1 font-mono text-right">35</td>
+                <td class="p-1 font-mono text-additive text-right">C</td><td class="p-1 font-mono text-right">43</td><td class="p-1 font-mono text-right">01000011</td><td class="p-1 font-mono text-right">67</td>
+                <td class="p-1 font-mono text-additive text-right">c</td><td class="p-1 font-mono text-right">63</td><td class="p-1 font-mono text-right">01100011</td><td class="p-1 font-mono text-right">99</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">EOT</td><td class="p-1 font-mono text-right">04</td><td class="p-1 font-mono text-right">00000100</td><td class="p-1 font-mono text-right">4</td>
+                <td class="p-1 font-mono text-additive text-right">$</td><td class="p-1 font-mono text-right">24</td><td class="p-1 font-mono text-right">00100100</td><td class="p-1 font-mono text-right">36</td>
+                <td class="p-1 font-mono text-additive text-right">D</td><td class="p-1 font-mono text-right">44</td><td class="p-1 font-mono text-right">01000100</td><td class="p-1 font-mono text-right">68</td>
+                <td class="p-1 font-mono text-additive text-right">d</td><td class="p-1 font-mono text-right">64</td><td class="p-1 font-mono text-right">01100100</td><td class="p-1 font-mono text-right">100</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">ENQ</td><td class="p-1 font-mono text-right">05</td><td class="p-1 font-mono text-right">00000101</td><td class="p-1 font-mono text-right">5</td>
+                <td class="p-1 font-mono text-additive text-right">%</td><td class="p-1 font-mono text-right">25</td><td class="p-1 font-mono text-right">00100101</td><td class="p-1 font-mono text-right">37</td>
+                <td class="p-1 font-mono text-additive text-right">E</td><td class="p-1 font-mono text-right">45</td><td class="p-1 font-mono text-right">01000101</td><td class="p-1 font-mono text-right">69</td>
+                <td class="p-1 font-mono text-additive text-right">e</td><td class="p-1 font-mono text-right">65</td><td class="p-1 font-mono text-right">01100101</td><td class="p-1 font-mono text-right">101</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">ACK</td><td class="p-1 font-mono text-right">06</td><td class="p-1 font-mono text-right">00000110</td><td class="p-1 font-mono text-right">6</td>
+                <td class="p-1 font-mono text-additive text-right">&</td><td class="p-1 font-mono text-right">26</td><td class="p-1 font-mono text-right">00100110</td><td class="p-1 font-mono text-right">38</td>
+                <td class="p-1 font-mono text-additive text-right">F</td><td class="p-1 font-mono text-right">46</td><td class="p-1 font-mono text-right">01000110</td><td class="p-1 font-mono text-right">70</td>
+                <td class="p-1 font-mono text-additive text-right">f</td><td class="p-1 font-mono text-right">66</td><td class="p-1 font-mono text-right">01100110</td><td class="p-1 font-mono text-right">102</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">BEL</td><td class="p-1 font-mono text-right">07</td><td class="p-1 font-mono text-right">00000111</td><td class="p-1 font-mono text-right">7</td>
+                <td class="p-1 font-mono text-additive text-right">'</td><td class="p-1 font-mono text-right">27</td><td class="p-1 font-mono text-right">00100111</td><td class="p-1 font-mono text-right">39</td>
+                <td class="p-1 font-mono text-additive text-right">G</td><td class="p-1 font-mono text-right">47</td><td class="p-1 font-mono text-right">01000111</td><td class="p-1 font-mono text-right">71</td>
+                <td class="p-1 font-mono text-additive text-right">g</td><td class="p-1 font-mono text-right">67</td><td class="p-1 font-mono text-right">01100111</td><td class="p-1 font-mono text-right">103</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">BS</td><td class="p-1 font-mono text-right">08</td><td class="p-1 font-mono text-right">00001000</td><td class="p-1 font-mono text-right">8</td>
+                <td class="p-1 font-mono text-additive text-right">(</td><td class="p-1 font-mono text-right">28</td><td class="p-1 font-mono text-right">00101000</td><td class="p-1 font-mono text-right">40</td>
+                <td class="p-1 font-mono text-additive text-right">H</td><td class="p-1 font-mono text-right">48</td><td class="p-1 font-mono text-right">01001000</td><td class="p-1 font-mono text-right">72</td>
+                <td class="p-1 font-mono text-additive text-right">h</td><td class="p-1 font-mono text-right">68</td><td class="p-1 font-mono text-right">01101000</td><td class="p-1 font-mono text-right">104</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">HT</td><td class="p-1 font-mono text-right">09</td><td class="p-1 font-mono text-right">00001001</td><td class="p-1 font-mono text-right">9</td>
+                <td class="p-1 font-mono text-additive text-right">)</td><td class="p-1 font-mono text-right">29</td><td class="p-1 font-mono text-right">00101001</td><td class="p-1 font-mono text-right">41</td>
+                <td class="p-1 font-mono text-additive text-right">I</td><td class="p-1 font-mono text-right">49</td><td class="p-1 font-mono text-right">01001001</td><td class="p-1 font-mono text-right">73</td>
+                <td class="p-1 font-mono text-additive text-right">i</td><td class="p-1 font-mono text-right">69</td><td class="p-1 font-mono text-right">01101001</td><td class="p-1 font-mono text-right">105</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">LF</td><td class="p-1 font-mono text-right">0A</td><td class="p-1 font-mono text-right">00001010</td><td class="p-1 font-mono text-right">10</td>
+                <td class="p-1 font-mono text-additive text-right">*</td><td class="p-1 font-mono text-right">2A</td><td class="p-1 font-mono text-right">00101010</td><td class="p-1 font-mono text-right">42</td>
+                <td class="p-1 font-mono text-additive text-right">J</td><td class="p-1 font-mono text-right">4A</td><td class="p-1 font-mono text-right">01001010</td><td class="p-1 font-mono text-right">74</td>
+                <td class="p-1 font-mono text-additive text-right">j</td><td class="p-1 font-mono text-right">6A</td><td class="p-1 font-mono text-right">01101010</td><td class="p-1 font-mono text-right">106</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">VT</td><td class="p-1 font-mono text-right">0B</td><td class="p-1 font-mono text-right">00001011</td><td class="p-1 font-mono text-right">11</td>
+                <td class="p-1 font-mono text-additive text-right">+</td><td class="p-1 font-mono text-right">2B</td><td class="p-1 font-mono text-right">00101011</td><td class="p-1 font-mono text-right">43</td>
+                <td class="p-1 font-mono text-additive text-right">K</td><td class="p-1 font-mono text-right">4B</td><td class="p-1 font-mono text-right">01001011</td><td class="p-1 font-mono text-right">75</td>
+                <td class="p-1 font-mono text-additive text-right">k</td><td class="p-1 font-mono text-right">6B</td><td class="p-1 font-mono text-right">01101011</td><td class="p-1 font-mono text-right">107</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">FF</td><td class="p-1 font-mono text-right">0C</td><td class="p-1 font-mono text-right">00001100</td><td class="p-1 font-mono text-right">12</td>
+                <td class="p-1 font-mono text-additive text-right">,</td><td class="p-1 font-mono text-right">2C</td><td class="p-1 font-mono text-right">00101100</td><td class="p-1 font-mono text-right">44</td>
+                <td class="p-1 font-mono text-additive text-right">L</td><td class="p-1 font-mono text-right">4C</td><td class="p-1 font-mono text-right">01001100</td><td class="p-1 font-mono text-right">76</td>
+                <td class="p-1 font-mono text-additive text-right">l</td><td class="p-1 font-mono text-right">6C</td><td class="p-1 font-mono text-right">01101100</td><td class="p-1 font-mono text-right">108</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">CR</td><td class="p-1 font-mono text-right">0D</td><td class="p-1 font-mono text-right">00001101</td><td class="p-1 font-mono text-right">13</td>
+                <td class="p-1 font-mono text-additive text-right">-</td><td class="p-1 font-mono text-right">2D</td><td class="p-1 font-mono text-right">00101101</td><td class="p-1 font-mono text-right">45</td>
+                <td class="p-1 font-mono text-additive text-right">M</td><td class="p-1 font-mono text-right">4D</td><td class="p-1 font-mono text-right">01001101</td><td class="p-1 font-mono text-right">77</td>
+                <td class="p-1 font-mono text-additive text-right">m</td><td class="p-1 font-mono text-right">6D</td><td class="p-1 font-mono text-right">01101101</td><td class="p-1 font-mono text-right">109</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">SO</td><td class="p-1 font-mono text-right">0E</td><td class="p-1 font-mono text-right">00001110</td><td class="p-1 font-mono text-right">14</td>
+                <td class="p-1 font-mono text-additive text-right">.</td><td class="p-1 font-mono text-right">2E</td><td class="p-1 font-mono text-right">00101110</td><td class="p-1 font-mono text-right">46</td>
+                <td class="p-1 font-mono text-additive text-right">N</td><td class="p-1 font-mono text-right">4E</td><td class="p-1 font-mono text-right">01001110</td><td class="p-1 font-mono text-right">78</td>
+                <td class="p-1 font-mono text-additive text-right">n</td><td class="p-1 font-mono text-right">6E</td><td class="p-1 font-mono text-right">01101110</td><td class="p-1 font-mono text-right">110</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">SI</td><td class="p-1 font-mono text-right">0F</td><td class="p-1 font-mono text-right">00001111</td><td class="p-1 font-mono text-right">15</td>
+                <td class="p-1 font-mono text-additive text-right">/</td><td class="p-1 font-mono text-right">2F</td><td class="p-1 font-mono text-right">00101111</td><td class="p-1 font-mono text-right">47</td>
+                <td class="p-1 font-mono text-additive text-right">O</td><td class="p-1 font-mono text-right">4F</td><td class="p-1 font-mono text-right">01001111</td><td class="p-1 font-mono text-right">79</td>
+                <td class="p-1 font-mono text-additive text-right">o</td><td class="p-1 font-mono text-right">6F</td><td class="p-1 font-mono text-right">01101111</td><td class="p-1 font-mono text-right">111</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">DLE</td><td class="p-1 font-mono text-right">10</td><td class="p-1 font-mono text-right">00010000</td><td class="p-1 font-mono text-right">16</td>
+                <td class="p-1 font-mono text-additive text-right">0</td><td class="p-1 font-mono text-right">30</td><td class="p-1 font-mono text-right">00110000</td><td class="p-1 font-mono text-right">48</td>
+                <td class="p-1 font-mono text-additive text-right">P</td><td class="p-1 font-mono text-right">50</td><td class="p-1 font-mono text-right">01010000</td><td class="p-1 font-mono text-right">80</td>
+                <td class="p-1 font-mono text-additive text-right">p</td><td class="p-1 font-mono text-right">70</td><td class="p-1 font-mono text-right">01110000</td><td class="p-1 font-mono text-right">112</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">DC1</td><td class="p-1 font-mono text-right">11</td><td class="p-1 font-mono text-right">00010001</td><td class="p-1 font-mono text-right">17</td>
+                <td class="p-1 font-mono text-additive text-right">1</td><td class="p-1 font-mono text-right">31</td><td class="p-1 font-mono text-right">00110001</td><td class="p-1 font-mono text-right">49</td>
+                <td class="p-1 font-mono text-additive text-right">Q</td><td class="p-1 font-mono text-right">51</td><td class="p-1 font-mono text-right">01010001</td><td class="p-1 font-mono text-right">81</td>
+                <td class="p-1 font-mono text-additive text-right">q</td><td class="p-1 font-mono text-right">71</td><td class="p-1 font-mono text-right">01110001</td><td class="p-1 font-mono text-right">113</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">DC2</td><td class="p-1 font-mono text-right">12</td><td class="p-1 font-mono text-right">00010010</td><td class="p-1 font-mono text-right">18</td>
+                <td class="p-1 font-mono text-additive text-right">2</td><td class="p-1 font-mono text-right">32</td><td class="p-1 font-mono text-right">00110010</td><td class="p-1 font-mono text-right">50</td>
+                <td class="p-1 font-mono text-additive text-right">R</td><td class="p-1 font-mono text-right">52</td><td class="p-1 font-mono text-right">01010010</td><td class="p-1 font-mono text-right">82</td>
+                <td class="p-1 font-mono text-additive text-right">r</td><td class="p-1 font-mono text-right">72</td><td class="p-1 font-mono text-right">01110010</td><td class="p-1 font-mono text-right">114</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">DC3</td><td class="p-1 font-mono text-right">13</td><td class="p-1 font-mono text-right">00010011</td><td class="p-1 font-mono text-right">19</td>
+                <td class="p-1 font-mono text-additive text-right">3</td><td class="p-1 font-mono text-right">33</td><td class="p-1 font-mono text-right">00110011</td><td class="p-1 font-mono text-right">51</td>
+                <td class="p-1 font-mono text-additive text-right">S</td><td class="p-1 font-mono text-right">53</td><td class="p-1 font-mono text-right">01010011</td><td class="p-1 font-mono text-right">83</td>
+                <td class="p-1 font-mono text-additive text-right">s</td><td class="p-1 font-mono text-right">73</td><td class="p-1 font-mono text-right">01110011</td><td class="p-1 font-mono text-right">115</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">DC4</td><td class="p-1 font-mono text-right">14</td><td class="p-1 font-mono text-right">00010100</td><td class="p-1 font-mono text-right">20</td>
+                <td class="p-1 font-mono text-additive text-right">4</td><td class="p-1 font-mono text-right">34</td><td class="p-1 font-mono text-right">00110100</td><td class="p-1 font-mono text-right">52</td>
+                <td class="p-1 font-mono text-additive text-right">T</td><td class="p-1 font-mono text-right">54</td><td class="p-1 font-mono text-right">01010100</td><td class="p-1 font-mono text-right">84</td>
+                <td class="p-1 font-mono text-additive text-right">t</td><td class="p-1 font-mono text-right">74</td><td class="p-1 font-mono text-right">01110100</td><td class="p-1 font-mono text-right">116</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">NAK</td><td class="p-1 font-mono text-right">15</td><td class="p-1 font-mono text-right">00010101</td><td class="p-1 font-mono text-right">21</td>
+                <td class="p-1 font-mono text-additive text-right">5</td><td class="p-1 font-mono text-right">35</td><td class="p-1 font-mono text-right">00110101</td><td class="p-1 font-mono text-right">53</td>
+                <td class="p-1 font-mono text-additive text-right">U</td><td class="p-1 font-mono text-right">55</td><td class="p-1 font-mono text-right">01010101</td><td class="p-1 font-mono text-right">85</td>
+                <td class="p-1 font-mono text-additive text-right">u</td><td class="p-1 font-mono text-right">75</td><td class="p-1 font-mono text-right">01110101</td><td class="p-1 font-mono text-right">117</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">SYN</td><td class="p-1 font-mono text-right">16</td><td class="p-1 font-mono text-right">00010110</td><td class="p-1 font-mono text-right">22</td>
+                <td class="p-1 font-mono text-additive text-right">6</td><td class="p-1 font-mono text-right">36</td><td class="p-1 font-mono text-right">00110110</td><td class="p-1 font-mono text-right">54</td>
+                <td class="p-1 font-mono text-additive text-right">V</td><td class="p-1 font-mono text-right">56</td><td class="p-1 font-mono text-right">01010110</td><td class="p-1 font-mono text-right">86</td>
+                <td class="p-1 font-mono text-additive text-right">v</td><td class="p-1 font-mono text-right">76</td><td class="p-1 font-mono text-right">01110110</td><td class="p-1 font-mono text-right">118</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">ETB</td><td class="p-1 font-mono text-right">17</td><td class="p-1 font-mono text-right">00010111</td><td class="p-1 font-mono text-right">23</td>
+                <td class="p-1 font-mono text-additive text-right">7</td><td class="p-1 font-mono text-right">37</td><td class="p-1 font-mono text-right">00110111</td><td class="p-1 font-mono text-right">55</td>
+                <td class="p-1 font-mono text-additive text-right">W</td><td class="p-1 font-mono text-right">57</td><td class="p-1 font-mono text-right">01010111</td><td class="p-1 font-mono text-right">87</td>
+                <td class="p-1 font-mono text-additive text-right">w</td><td class="p-1 font-mono text-right">77</td><td class="p-1 font-mono text-right">01110111</td><td class="p-1 font-mono text-right">119</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">CAN</td><td class="p-1 font-mono text-right">18</td><td class="p-1 font-mono text-right">00011000</td><td class="p-1 font-mono text-right">24</td>
+                <td class="p-1 font-mono text-additive text-right">8</td><td class="p-1 font-mono text-right">38</td><td class="p-1 font-mono text-right">00111000</td><td class="p-1 font-mono text-right">56</td>
+                <td class="p-1 font-mono text-additive text-right">X</td><td class="p-1 font-mono text-right">58</td><td class="p-1 font-mono text-right">01011000</td><td class="p-1 font-mono text-right">88</td>
+                <td class="p-1 font-mono text-additive text-right">x</td><td class="p-1 font-mono text-right">78</td><td class="p-1 font-mono text-right">01111000</td><td class="p-1 font-mono text-right">120</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">EM</td><td class="p-1 font-mono text-right">19</td><td class="p-1 font-mono text-right">00011001</td><td class="p-1 font-mono text-right">25</td>
+                <td class="p-1 font-mono text-additive text-right">9</td><td class="p-1 font-mono text-right">39</td><td class="p-1 font-mono text-right">00111001</td><td class="p-1 font-mono text-right">57</td>
+                <td class="p-1 font-mono text-additive text-right">Y</td><td class="p-1 font-mono text-right">59</td><td class="p-1 font-mono text-right">01011001</td><td class="p-1 font-mono text-right">89</td>
+                <td class="p-1 font-mono text-additive text-right">y</td><td class="p-1 font-mono text-right">79</td><td class="p-1 font-mono text-right">01111001</td><td class="p-1 font-mono text-right">121</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">SUB</td><td class="p-1 font-mono text-right">1A</td><td class="p-1 font-mono text-right">00011010</td><td class="p-1 font-mono text-right">26</td>
+                <td class="p-1 font-mono text-additive text-right">:</td><td class="p-1 font-mono text-right">3A</td><td class="p-1 font-mono text-right">00111010</td><td class="p-1 font-mono text-right">58</td>
+                <td class="p-1 font-mono text-additive text-right">Z</td><td class="p-1 font-mono text-right">5A</td><td class="p-1 font-mono text-right">01011010</td><td class="p-1 font-mono text-right">90</td>
+                <td class="p-1 font-mono text-additive text-right">z</td><td class="p-1 font-mono text-right">7A</td><td class="p-1 font-mono text-right">01111010</td><td class="p-1 font-mono text-right">122</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">ESC</td><td class="p-1 font-mono text-right">1B</td><td class="p-1 font-mono text-right">00011011</td><td class="p-1 font-mono text-right">27</td>
+                <td class="p-1 font-mono text-additive text-right">;</td><td class="p-1 font-mono text-right">3B</td><td class="p-1 font-mono text-right">00111011</td><td class="p-1 font-mono text-right">59</td>
+                <td class="p-1 font-mono text-additive text-right">[</td><td class="p-1 font-mono text-right">5B</td><td class="p-1 font-mono text-right">01011011</td><td class="p-1 font-mono text-right">91</td>
+                <td class="p-1 font-mono text-additive text-right">&#123;</td><td class="p-1 font-mono text-right">7B</td><td class="p-1 font-mono text-right">01111011</td><td class="p-1 font-mono text-right">123</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">FS</td><td class="p-1 font-mono text-right">1C</td><td class="p-1 font-mono text-right">00011100</td><td class="p-1 font-mono text-right">28</td>
+                <td class="p-1 font-mono text-additive text-right">&lt;</td><td class="p-1 font-mono text-right">3C</td><td class="p-1 font-mono text-right">00111100</td><td class="p-1 font-mono text-right">60</td>
+                <td class="p-1 font-mono text-additive text-right">\</td><td class="p-1 font-mono text-right">5C</td><td class="p-1 font-mono text-right">01011100</td><td class="p-1 font-mono text-right">92</td>
+                <td class="p-1 font-mono text-additive text-right">|</td><td class="p-1 font-mono text-right">7C</td><td class="p-1 font-mono text-right">01111100</td><td class="p-1 font-mono text-right">124</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">GS</td><td class="p-1 font-mono text-right">1D</td><td class="p-1 font-mono text-right">00011101</td><td class="p-1 font-mono text-right">29</td>
+                <td class="p-1 font-mono text-additive text-right">=</td><td class="p-1 font-mono text-right">3D</td><td class="p-1 font-mono text-right">00111101</td><td class="p-1 font-mono text-right">61</td>
+                <td class="p-1 font-mono text-additive text-right">]</td><td class="p-1 font-mono text-right">5D</td><td class="p-1 font-mono text-right">01011101</td><td class="p-1 font-mono text-right">93</td>
+                <td class="p-1 font-mono text-additive text-right">&#125;</td><td class="p-1 font-mono text-right">7D</td><td class="p-1 font-mono text-right">01111101</td><td class="p-1 font-mono text-right">125</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-background">
+                <td class="p-1 font-mono text-additive text-right">RS</td><td class="p-1 font-mono text-right">1E</td><td class="p-1 font-mono text-right">00011110</td><td class="p-1 font-mono text-right">30</td>
+                <td class="p-1 font-mono text-additive text-right">&gt;</td><td class="p-1 font-mono text-right">3E</td><td class="p-1 font-mono text-right">00111110</td><td class="p-1 font-mono text-right">62</td>
+                <td class="p-1 font-mono text-additive text-right">^</td><td class="p-1 font-mono text-right">5E</td><td class="p-1 font-mono text-right">01011110</td><td class="p-1 font-mono text-right">94</td>
+                <td class="p-1 font-mono text-additive text-right">~</td><td class="p-1 font-mono text-right">7E</td><td class="p-1 font-mono text-right">01111110</td><td class="p-1 font-mono text-right">126</td>
+              </tr>
+              <tr class="border-b border-border/50 hover:bg-muted/50 bg-muted/20">
+                <td class="p-1 font-mono text-additive text-right">US</td><td class="p-1 font-mono text-right">1F</td><td class="p-1 font-mono text-right">00011111</td><td class="p-1 font-mono text-right">31</td>
+                <td class="p-1 font-mono text-additive text-right">?</td><td class="p-1 font-mono text-right">3F</td><td class="p-1 font-mono text-right">00111111</td><td class="p-1 font-mono text-right">63</td>
+                <td class="p-1 font-mono text-additive text-right">_</td><td class="p-1 font-mono text-right">5F</td><td class="p-1 font-mono text-right">01011111</td><td class="p-1 font-mono text-right">95</td>
+                <td class="p-1 font-mono text-additive text-right">DEL</td><td class="p-1 font-mono text-right">7F</td><td class="p-1 font-mono text-right">01111111</td><td class="p-1 font-mono text-right">127</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</Layout>
+
+<script>
+  // Delimiter and prefix utilities
+  function getDelimiter(): string {
+    const select = document.getElementById('delimiter-select') as HTMLSelectElement;
+    const customInput = document.getElementById('custom-delimiter') as HTMLInputElement;
+    
+    switch (select.value) {
+      case 'space':
+        return ' ';
+      case 'none':
+        return '';
+      case 'comma':
+        return ', ';
+      case 'custom':
+        return customInput.value || ' ';
+      default:
+        return ' ';
+    }
+  }
+
+  function usePrefix(): boolean {
+    const toggle = document.getElementById('prefix-toggle') as HTMLButtonElement;
+    return toggle.dataset.prefix === 'true';
+  }
+
+  function stringToHex(str: string) {
+    const delimiter = getDelimiter();
+    const prefix = usePrefix() ? '0x' : '';
+    return str.split('').map(char => 
+      prefix + char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')
+    ).join(delimiter);
+  }
+
+  function stringToBinary(str: string) {
+    const delimiter = getDelimiter();
+    const prefix = usePrefix() ? '0b' : '';
+    return str.split('').map(char => 
+      prefix + char.charCodeAt(0).toString(2).padStart(8, '0')
+    ).join(delimiter);
+  }
+
+  function stringToDecimal(str: string) {
+    const delimiter = getDelimiter();
+    return str.split('').map(char => 
+      char.charCodeAt(0).toString()
+    ).join(delimiter);
+  }
+
+  function hexToString(hex: string) {
+    // Remove prefixes first
+    let cleaned = hex.replace(/0x/gi, '');
+    
+    // Split based on current delimiter setting
+    const delimiter = getDelimiter();
+    let values: string[];
+    
+    if (delimiter === '') {
+      // No delimiter - split every 2 characters for hex
+      values = cleaned.match(/.{1,2}/g) || [];
+    } else if (delimiter === ' ') {
+      // Space delimiter - split on any whitespace
+      values = cleaned.split(/\s+/).filter(h => h);
+    } else if (delimiter === ', ') {
+      // Comma delimiter - split on comma with optional space
+      values = cleaned.split(/,\s*/).filter(h => h);
+    } else {
+      // Custom delimiter
+      const customDelimiter = document.getElementById('custom-delimiter') as HTMLInputElement;
+      const delimiterValue = customDelimiter.value || ' ';
+      values = cleaned.split(delimiterValue).filter(h => h);
+    }
+    
+    return values.map(h => String.fromCharCode(parseInt(h.trim(), 16))).join('');
+  }
+
+  function binaryToString(binary: string) {
+    // Remove prefixes first
+    let cleaned = binary.replace(/0b/gi, '');
+    
+    // Split based on current delimiter setting
+    const delimiter = getDelimiter();
+    let values: string[];
+    
+    if (delimiter === '') {
+      // No delimiter - split every 8 characters for binary
+      values = cleaned.match(/.{1,8}/g) || [];
+    } else if (delimiter === ' ') {
+      // Space delimiter - split on any whitespace
+      values = cleaned.split(/\s+/).filter(b => b);
+    } else if (delimiter === ', ') {
+      // Comma delimiter - split on comma with optional space
+      values = cleaned.split(/,\s*/).filter(b => b);
+    } else {
+      // Custom delimiter
+      const customDelimiter = document.getElementById('custom-delimiter') as HTMLInputElement;
+      const delimiterValue = customDelimiter.value || ' ';
+      values = cleaned.split(delimiterValue).filter(b => b);
+    }
+    
+    return values.map(b => String.fromCharCode(parseInt(b.trim(), 2))).join('');
+  }
+
+  function decimalToString(decimal: string) {
+    // Split based on current delimiter setting
+    const delimiter = getDelimiter();
+    let values: string[];
+    
+    if (delimiter === '') {
+      // No delimiter - this is tricky for decimal, assume single digits or use spaces
+      values = decimal.split(/\s+/).filter(d => d);
+    } else if (delimiter === ' ') {
+      // Space delimiter - split on any whitespace
+      values = decimal.split(/\s+/).filter(d => d);
+    } else if (delimiter === ', ') {
+      // Comma delimiter - split on comma with optional space
+      values = decimal.split(/,\s*/).filter(d => d);
+    } else {
+      // Custom delimiter
+      const customDelimiter = document.getElementById('custom-delimiter') as HTMLInputElement;
+      const delimiterValue = customDelimiter.value || ' ';
+      values = decimal.split(delimiterValue).filter(d => d);
+    }
+    
+    return values.map(d => String.fromCharCode(parseInt(d.trim(), 10))).join('');
+  }
+
+  function base64ToString(base64: string) {
+    // Remove whitespace and try to decode
+    const cleaned = base64.replace(/\s+/g, '');
+    if (!cleaned) return '';
+    
+    // Try to decode, handling padding automatically
+    try {
+      return atob(cleaned);
+    } catch (e) {
+      // take less characters 
+      for (let i = 1; i < 5; i++) {
+        try {
+            return atob(base64.substring(0, cleaned.length - i));
+        } catch (e) {}
+      }
+      return '';
+    }
+  }
+
+  function stringToBase64(str: string) {
+    try {
+      return btoa(str);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function integerToString(intStr: string, bigEndian: boolean = true) {
+    const num = BigInt(intStr.trim());
+    if (num < 0n) return '';
+    
+    if (num === 0n) return '\x00';
+    
+    const bytes: number[] = [];
+    let temp = num;
+    
+    while (temp > 0n) {
+      bytes.push(Number(temp & 0xFFn));
+      temp = temp >> 8n;
+    }
+    
+    if (!bigEndian) {
+      // Little endian - keep bytes as is
+      return String.fromCharCode(...bytes);
+    } else {
+      // Big endian - reverse bytes
+      return String.fromCharCode(...bytes.reverse());
+    }
+  }
+
+  function stringToInteger(str: string, bigEndian: boolean = true) {
+    if (!str) return '0';
+    
+    const bytes = Array.from(str).map(c => c.charCodeAt(0));
+    
+    if (!bigEndian) {
+      // Little endian - reverse bytes for calculation
+      bytes.reverse();
+    }
+    
+    let result = 0n;
+    for (const byte of bytes) {
+      result = (result << 8n) + BigInt(byte);
+    }
+    
+    return result.toString();
+  }
+
+  // Copy functionality
+  function copyToClipboard(text: string): Promise<boolean> {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return Promise.resolve(successful);
+      } catch (err) {
+        document.body.removeChild(textArea);
+        return Promise.resolve(false);
+      }
+    }
+  }
+
+  function handleCopyClick(event: Event) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const targetId = button.dataset.target;
+    if (!targetId) return;
+    
+    const textarea = document.getElementById(targetId) as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    if (!textarea.value.trim()) {
+      // No content to copy
+      return;
+    }
+    
+    copyToClipboard(textarea.value).then(success => {
+      if (success) {
+        // Visual feedback
+        const originalHTML = button.innerHTML;
+        button.innerHTML = `
+          <svg class="w-4 h-4 text-additive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        `;
+        
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+        }, 1000);
+      }
+    });
+  }
+
+  // Transformation functions
+  function caesarCipher(text: string, shift: number): string {
+    return text.split('').map(char => {
+      const code = char.charCodeAt(0);
+      
+      // Uppercase A-Z
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(((code - 65 + shift) % 26 + 26) % 26 + 65);
+      }
+      // Lowercase a-z
+      else if (code >= 97 && code <= 122) {
+        return String.fromCharCode(((code - 97 + shift) % 26 + 26) % 26 + 97);
+      }
+      
+      return char;
+    }).join('');
+  }
+
+  function rot13(text: string): string {
+    return caesarCipher(text, 13);
+  }
+
+  function rot47(text: string): string {
+    return text.split('').map(char => {
+      const code = char.charCodeAt(0);
+      
+      // Printable ASCII range 33-126
+      if (code >= 33 && code <= 126) {
+        return String.fromCharCode(((code - 33 + 47) % 94) + 33);
+      }
+      
+      return char;
+    }).join('');
+  }
+
+  function xorTransform(text: string, key: string): string {
+    if (!key) return text;
+    
+    return text.split('').map((char, index) => {
+      const keyChar = key[index % key.length];
+      return String.fromCharCode(char.charCodeAt(0) ^ keyChar.charCodeAt(0));
+    }).join('');
+  }
+
+  function reverseText(text: string): string {
+    return text.split('').reverse().join('');
+  }
+
+  // Setup on page load
+  document.addEventListener('astro:page-load', () => {
+    // Get input elements
+    const asciiInput = document.getElementById('ascii-input') as HTMLTextAreaElement;
+    const hexInput = document.getElementById('hex-input') as HTMLTextAreaElement;
+    const binaryInput = document.getElementById('binary-input') as HTMLTextAreaElement;
+    const decimalInput = document.getElementById('decimal-input') as HTMLTextAreaElement;
+    const base64Input = document.getElementById('base64-input') as HTMLTextAreaElement;
+    const integerInput = document.getElementById('integer-input') as HTMLTextAreaElement;
+    const endianToggle = document.getElementById('endian-toggle') as HTMLButtonElement;
+    const delimiterSelect = document.getElementById('delimiter-select') as HTMLSelectElement;
+    const customDelimiterInput = document.getElementById('custom-delimiter') as HTMLInputElement;
+    const customDelimiterBox = document.getElementById('custom-delimiter-box') as HTMLDivElement;
+    const prefixToggle = document.getElementById('prefix-toggle') as HTMLButtonElement;
+
+    // Transformation elements
+    const transformSelect = document.getElementById('transform-select') as HTMLSelectElement;
+    const transformArgs = document.getElementById('transform-args') as HTMLDivElement;
+    const transformArgLabel = document.getElementById('transform-arg-label') as HTMLLabelElement;
+    const transformArgInput = document.getElementById('transform-arg-input') as HTMLInputElement;
+    const applyTransformBtn = document.getElementById('apply-transform') as HTMLButtonElement;
+    const resetAsciiBtn = document.getElementById('reset-ascii') as HTMLButtonElement;
+    const transformResult = document.getElementById('transform-result') as HTMLDivElement;
+    const transformOutput = document.getElementById('transform-output') as HTMLTextAreaElement;
+
+    let updating = false;
+    let originalText = '';
+
+    function getEndianness(): boolean {
+      return endianToggle.dataset.endian === 'big';
+    }
+
+    // Conversion functions
+    function updateFromAscii() {
+      if (updating) return;
+      updating = true;
+      const text = asciiInput.value;
+      hexInput.value = stringToHex(text);
+      binaryInput.value = stringToBinary(text);
+      decimalInput.value = stringToDecimal(text);
+      base64Input.value = stringToBase64(text);
+      integerInput.value = stringToInteger(text, getEndianness());
+      updating = false;
+    }
+
+    function updateFromHex() {
+      if (updating) return;
+      updating = true;
+      try {
+        const text = hexToString(hexInput.value);
+        asciiInput.value = text;
+        binaryInput.value = stringToBinary(text);
+        decimalInput.value = stringToDecimal(text);
+        base64Input.value = stringToBase64(text);
+        integerInput.value = stringToInteger(text, getEndianness());
+      } catch (e) {
+        // Invalid hex input
+      }
+      updating = false;
+    }
+
+    function updateFromBinary() {
+      if (updating) return;
+      updating = true;
+      try {
+        const text = binaryToString(binaryInput.value);
+        asciiInput.value = text;
+        hexInput.value = stringToHex(text);
+        decimalInput.value = stringToDecimal(text);
+        base64Input.value = stringToBase64(text);
+        integerInput.value = stringToInteger(text, getEndianness());
+      } catch (e) {
+        // Invalid binary input
+      }
+      updating = false;
+    }
+
+    function updateFromDecimal() {
+      if (updating) return;
+      updating = true;
+      try {
+        const text = decimalToString(decimalInput.value);
+        asciiInput.value = text;
+        hexInput.value = stringToHex(text);
+        binaryInput.value = stringToBinary(text);
+        base64Input.value = stringToBase64(text);
+        integerInput.value = stringToInteger(text, getEndianness());
+      } catch (e) {
+        // Invalid decimal input
+      }
+      updating = false;
+    }
+
+    function updateFromBase64() {
+      if (updating) return;
+      updating = true;
+      try {
+        const text = base64ToString(base64Input.value);
+        asciiInput.value = text;
+        hexInput.value = stringToHex(text);
+        binaryInput.value = stringToBinary(text);
+        decimalInput.value = stringToDecimal(text);
+        integerInput.value = stringToInteger(text, getEndianness());
+      } catch (e) {
+        // Invalid base64 input
+      }
+      updating = false;
+    }
+
+    function updateFromInteger() {
+      if (updating) return;
+      updating = true;
+      try {
+        const text = integerToString(integerInput.value, getEndianness());
+        asciiInput.value = text;
+        hexInput.value = stringToHex(text);
+        binaryInput.value = stringToBinary(text);
+        decimalInput.value = stringToDecimal(text);
+        base64Input.value = stringToBase64(text);
+      } catch (e) {
+        // Invalid integer input
+      }
+      updating = false;
+    }
+
+    function toggleEndianness() {
+      const isBig = getEndianness();
+      endianToggle.dataset.endian = isBig ? 'little' : 'big';
+      endianToggle.textContent = isBig ? 'Little Endian' : 'Big Endian';
+      
+      // Update integer field if it has a value
+      if (integerInput.value.trim()) {
+        updateFromInteger();
+      }
+    }
+
+    function togglePrefix() {
+      const hasPrefix = usePrefix();
+      prefixToggle.dataset.prefix = hasPrefix ? 'false' : 'true';
+      prefixToggle.textContent = hasPrefix ? 'No Prefix' : '0x Prefix';
+      
+      // Update hex field if it has content
+      if (asciiInput.value) {
+        hexInput.value = stringToHex(asciiInput.value);
+        binaryInput.value = stringToBinary(asciiInput.value);
+      }
+    }
+
+    function handleDelimiterChange() {
+      const isCustom = delimiterSelect.value === 'custom';
+      customDelimiterBox.classList.toggle('hidden', !isCustom);
+      
+      // Update all fields if ASCII has content
+      if (asciiInput.value) {
+        updateFromAscii();
+      }
+    }
+
+    function handleTransformSelect() {
+      const transform = transformSelect.value;
+      const needsArg = ['caesar', 'xor'].includes(transform);
+      
+      transformArgs.classList.toggle('hidden', !needsArg);
+      applyTransformBtn.disabled = !transform;
+      
+      if (needsArg) {
+        if (transform === 'caesar') {
+          transformArgLabel.textContent = 'Shift Amount';
+          transformArgInput.placeholder = 'Enter shift value (e.g., 3)';
+          transformArgInput.type = 'number';
+        } else if (transform === 'xor') {
+          transformArgLabel.textContent = 'XOR Key';
+          transformArgInput.placeholder = 'Enter XOR key';
+          transformArgInput.type = 'text';
+        }
+      }
+      
+      transformResult.classList.add('hidden');
+    }
+
+    function applyTransformation() {
+      const transform = transformSelect.value;
+      const input = asciiInput.value;
+      const arg = transformArgInput.value;
+      
+      if (!transform || !input) return;
+      
+      // Store original if this is the first transformation
+      if (!originalText) {
+        originalText = input;
+      }
+      
+      let result = '';
+      
+      switch (transform) {
+        case 'caesar':
+          const shift = parseInt(arg) || 0;
+          result = caesarCipher(input, shift);
+          break;
+        case 'rot13':
+          result = rot13(input);
+          break;
+        case 'rot47':
+          result = rot47(input);
+          break;
+        case 'xor':
+          result = xorTransform(input, arg);
+          break;
+        case 'reverse':
+          result = reverseText(input);
+          break;
+        case 'uppercase':
+          result = input.toUpperCase();
+          break;
+        case 'lowercase':
+          result = input.toLowerCase();
+          break;
+        default:
+          return;
+      }
+      
+      // Apply transformation in place
+      asciiInput.value = result;
+      updateFromAscii();
+      
+      // Enable reset button
+      resetAsciiBtn.disabled = false;
+    }
+
+    function resetAscii() {
+      if (originalText) {
+        asciiInput.value = originalText;
+        updateFromAscii();
+        originalText = '';
+        resetAsciiBtn.disabled = true;
+      }
+      transformSelect.value = '';
+      handleTransformSelect();
+    }
+
+    // Event listeners
+    asciiInput.addEventListener('input', updateFromAscii);
+    hexInput.addEventListener('input', updateFromHex);
+    binaryInput.addEventListener('input', updateFromBinary);
+    decimalInput.addEventListener('input', updateFromDecimal);
+    base64Input.addEventListener('input', updateFromBase64);
+    integerInput.addEventListener('input', updateFromInteger);
+    endianToggle.addEventListener('click', toggleEndianness);
+    delimiterSelect.addEventListener('change', handleDelimiterChange);
+    customDelimiterInput.addEventListener('input', handleDelimiterChange);
+    prefixToggle.addEventListener('click', togglePrefix);
+    transformSelect.addEventListener('change', handleTransformSelect);
+    applyTransformBtn.addEventListener('click', applyTransformation);
+    resetAsciiBtn.addEventListener('click', resetAscii);
+
+    // Add copy button event listeners
+    document.querySelectorAll('.copy-btn').forEach(button => {
+      button.addEventListener('click', handleCopyClick);
+    });
+  });
+</script>

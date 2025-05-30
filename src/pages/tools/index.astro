@@ -1,0 +1,31 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import Link from '@/components/Link.astro'
+import PageHead from '@/components/PageHead.astro'
+import Layout from '@/layouts/Layout.astro'
+import { Icon } from 'astro-icon/components'
+---
+
+<Layout>
+  <PageHead slot="head" title="Tools" />
+  <Breadcrumbs items={[{ label: 'Tools', icon: 'lucide:wrench' }]} />
+
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-wrap gap-2">
+      <ul class="flex flex-col gap-2">
+        <li>
+          <Link
+            href="/tools/ascii"
+            class="hover:bg-accent/10 text-foreground/80 hover:text-foreground/100 p-4 rounded-lg transition-colors"
+          >
+            ASCII Converter
+            <Icon name="lucide:type" class="size-4 inline" />
+          <p class="text-sm mt-1 ml-1">
+            Convert between ASCII text, hex, binary, decimal, Base64, and integer formats with customizable delimiters and some common text transformations.
+          </p>
+          </Link>
+        </li>
+      </ul>
+    </div>
+  </div>
+</Layout>
