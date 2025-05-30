@@ -57,13 +57,14 @@ import Layout from '@/layouts/Layout.astro'
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <p><label for="ascii-input" class="text-sm font-medium">ASCII Text</label></p>
+            <p><label for="ascii-input" class="text-muted-foreground text-sm font-medium">ASCII Text</label></p>
             <div class="relative">
               <textarea
                 id="ascii-input"
                 placeholder="Enter ASCII text..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -78,13 +79,14 @@ import Layout from '@/layouts/Layout.astro'
           </div>
           
           <div class="space-y-2">
-            <p><label for="hex-input" class="text-sm font-medium">Hex (bytes)</label></p>
+            <p><label for="hex-input" class="text-muted-foreground text-sm font-medium">Hex (bytes)</label></p>
             <div class="relative">
               <textarea
                 id="hex-input"
                 placeholder="Enter hex values..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -99,13 +101,14 @@ import Layout from '@/layouts/Layout.astro'
           </div>
           
           <div class="space-y-2">
-            <p><label for="binary-input" class="text-sm font-medium">Binary (bytes)</label></p>
+            <p><label for="binary-input" class="text-muted-foreground text-sm font-medium">Binary (bytes)</label></p>
             <div class="relative">
               <textarea
                 id="binary-input"
                 placeholder="Enter binary values..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -120,13 +123,14 @@ import Layout from '@/layouts/Layout.astro'
           </div>
           
           <div class="space-y-2">
-            <p><label for="decimal-input" class="text-sm font-medium">Decimal (bytes)</label></p>
+            <p><label for="decimal-input" class="text-muted-foreground text-sm font-medium">Decimal (bytes)</label></p>
             <div class="relative">
               <textarea
                 id="decimal-input"
                 placeholder="Enter decimal values..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -141,13 +145,14 @@ import Layout from '@/layouts/Layout.astro'
           </div>
 
           <div class="space-y-2">
-            <p><label for="base64-input" class="text-sm font-medium">Base64</label></p>
+            <p><label for="base64-input" class="text-muted-foreground text-sm font-medium">Base64</label></p>
             <div class="relative">
               <textarea
                 id="base64-input"
                 placeholder="Enter Base64 value..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -162,8 +167,8 @@ import Layout from '@/layouts/Layout.astro'
           </div>
 
           <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <label for="integer-input" class="text-sm font-medium">Integer</label>
+            <p>
+              <label for="integer-input" class="text-muted-foreground text-sm font-medium">Integer</label>
               <button
                 id="endian-toggle"
                 class="px-2 py-1 text-xs border border-border rounded bg-background hover:bg-muted transition-colors"
@@ -171,13 +176,14 @@ import Layout from '@/layouts/Layout.astro'
               >
                 Big Endian
               </button>
-            </div>
+            <p>
             <div class="relative">
               <textarea
                 id="integer-input"
                 placeholder="Enter integer value..."
-                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none"
+                class="w-full p-3 pr-12 border border-border rounded-md bg-background text-foreground resize-none font-mono"
                 rows="3"
+                spellcheck="false"
               ></textarea>
               <button
                 class="copy-btn absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
@@ -191,6 +197,11 @@ import Layout from '@/layouts/Layout.astro'
             </div>
           </div>
         </div>
+        <div class="mt-4">
+          <p class="text-sm text-muted-foreground">Length (bytes): 
+            <code id="ascii-length" class="font-mono text-foreground">0</code>
+          </p>
+        </div>
       </CardContent>
     </Card>
 
@@ -202,7 +213,7 @@ import Layout from '@/layouts/Layout.astro'
       <CardContent>
         <div class="py-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <label class="text-sm font-medium">Transformation</label>
+            <label class="text-muted-foreground text-sm font-medium">Transformation</label>
             <select id="transform-select" class="w-full p-2 text-sm border border-border rounded bg-background">
               <option value="">Select transformation...</option>
               <option value="caesar">Caesar Cipher</option>
@@ -216,7 +227,7 @@ import Layout from '@/layouts/Layout.astro'
           </div>
           
           <div id="transform-args" class="space-y-2 hidden">
-            <label id="transform-arg-label" class="text-sm font-medium">Argument</label>
+            <label id="transform-arg-label" class="text-muted-foreground text-sm font-medium">Argument</label>
             <input
               id="transform-arg-input"
               type="text"
@@ -783,6 +794,7 @@ import Layout from '@/layouts/Layout.astro'
     const base64Input = document.getElementById('base64-input') as HTMLTextAreaElement;
     const integerInput = document.getElementById('integer-input') as HTMLTextAreaElement;
     const endianToggle = document.getElementById('endian-toggle') as HTMLButtonElement;
+    const lengthOutput = document.getElementById('ascii-length') as HTMLSpanElement;
     const delimiterSelect = document.getElementById('delimiter-select') as HTMLSelectElement;
     const customDelimiterInput = document.getElementById('custom-delimiter') as HTMLInputElement;
     const customDelimiterBox = document.getElementById('custom-delimiter-box') as HTMLDivElement;
@@ -809,6 +821,7 @@ import Layout from '@/layouts/Layout.astro'
       if (updating) return;
       updating = true;
       const text = asciiInput.value;
+      lengthOutput.textContent = text.length.toString();
       hexInput.value = stringToHex(text);
       binaryInput.value = stringToBinary(text);
       decimalInput.value = stringToDecimal(text);
@@ -823,6 +836,7 @@ import Layout from '@/layouts/Layout.astro'
       try {
         const text = hexToString(hexInput.value);
         asciiInput.value = text;
+        lengthOutput.textContent = text.length.toString();
         binaryInput.value = stringToBinary(text);
         decimalInput.value = stringToDecimal(text);
         base64Input.value = stringToBase64(text);
@@ -839,6 +853,7 @@ import Layout from '@/layouts/Layout.astro'
       try {
         const text = binaryToString(binaryInput.value);
         asciiInput.value = text;
+        lengthOutput.textContent = text.length.toString();
         hexInput.value = stringToHex(text);
         decimalInput.value = stringToDecimal(text);
         base64Input.value = stringToBase64(text);
@@ -855,6 +870,7 @@ import Layout from '@/layouts/Layout.astro'
       try {
         const text = decimalToString(decimalInput.value);
         asciiInput.value = text;
+        lengthOutput.textContent = text.length.toString();
         hexInput.value = stringToHex(text);
         binaryInput.value = stringToBinary(text);
         base64Input.value = stringToBase64(text);
@@ -871,6 +887,7 @@ import Layout from '@/layouts/Layout.astro'
       try {
         const text = base64ToString(base64Input.value);
         asciiInput.value = text;
+        lengthOutput.textContent = text.length.toString();
         hexInput.value = stringToHex(text);
         binaryInput.value = stringToBinary(text);
         decimalInput.value = stringToDecimal(text);
@@ -887,6 +904,7 @@ import Layout from '@/layouts/Layout.astro'
       try {
         const text = integerToString(integerInput.value, getEndianness());
         asciiInput.value = text;
+        lengthOutput.textContent = text.length.toString();
         hexInput.value = stringToHex(text);
         binaryInput.value = stringToBinary(text);
         decimalInput.value = stringToDecimal(text);
@@ -995,6 +1013,8 @@ import Layout from '@/layouts/Layout.astro'
       
       // Apply transformation in place
       asciiInput.value = result;
+      // none of these transformations change the length
+      // lengthOutput.textContent = result.length.toString();
       updateFromAscii();
       
       // Enable reset button
@@ -1004,6 +1024,8 @@ import Layout from '@/layouts/Layout.astro'
     function resetAscii() {
       if (originalText) {
         asciiInput.value = originalText;
+        // see above
+        // lengthOutput.textContent = originalText.length.toString();
         updateFromAscii();
         originalText = '';
         resetAsciiBtn.disabled = true;
