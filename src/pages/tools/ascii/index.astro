@@ -16,7 +16,7 @@ import Layout from '@/layouts/Layout.astro'
     <!-- Converter Section -->
     <Card>
       <CardHeader>
-        <CardTitle>ASCII, Hex, Binary, Decimal Converter</CardTitle>
+        <CardTitle>ASCII Converter</CardTitle>
       </CardHeader>
       <CardContent>
         <!-- Settings Section -->
@@ -49,7 +49,7 @@ import Layout from '@/layouts/Layout.astro'
                 class="w-full px-3 py-2 text-sm border border-border rounded bg-background hover:bg-muted transition-colors text-left"
                 data-prefix="false"
               >
-                No Prefix
+                No
               </button>
             </div>
           </div>
@@ -911,7 +911,7 @@ import Layout from '@/layouts/Layout.astro'
     function togglePrefix() {
       const hasPrefix = usePrefix();
       prefixToggle.dataset.prefix = hasPrefix ? 'false' : 'true';
-      prefixToggle.textContent = hasPrefix ? 'No Prefix' : '0x Prefix';
+      prefixToggle.textContent = hasPrefix ? 'No' : 'Yes';
       
       // Update hex field if it has content
       if (asciiInput.value) {
